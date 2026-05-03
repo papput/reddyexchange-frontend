@@ -5,9 +5,17 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... } }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { nitro } from "nitro/vite";
 
-/** Dev: frontend port 5015, proxy `/api` → backend (default 5010). */
+/**
+ * Dev: frontend port 5015, proxy `/api` → backend (default 5010).
+ * - `cloudflare: false` — Lovable’s default Cloudflare build targets Workers, not Vercel.
+ * - `nitro()` — TanStack Start on Vercel needs Nitro’s output (see Vercel “TanStack Start” docs).
+ *   Without it, `vite build` has no deployable static root → Vercel `404 NOT_FOUND`.
+ */
 export default defineConfig({
+  cloudflare: false,
+  plugins: [nitro()],
   vite: {
     server: {
       host: "127.0.0.1",
