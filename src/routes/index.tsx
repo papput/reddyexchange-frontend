@@ -23,13 +23,19 @@ import { site } from "@/config/site";
 import { buildWhatsAppUrl, defaultWhatsAppMessage } from "@/lib/contact-links";
 import whatsappIcon from "@/assets/whatsapp.svg";
 import { InrPerUsdtRate, UsdtWord } from "@/components/app/UsdtMark";
-import { BuyFlowStepChoosePayAndToken, type BuyAsset } from "@/components/app/BuyFlowStepChoosePayAndToken";
+import {
+  BuyFlowStepChoosePayAndToken,
+  type BuyAsset,
+} from "@/components/app/BuyFlowStepChoosePayAndToken";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: `${site.siteName} — Buy USDT Instantly in India | Fast, Secure, Trusted` },
-      { name: "description", content: `Buy and sell USDT instantly in India with ${site.siteName}. Live INR↔USDT rate, UPI & bank transfer, multiple networks (TRC20, ERC20, BEP20).` },
+      {
+        name: "description",
+        content: `Buy and sell USDT instantly in India with ${site.siteName}. Live INR↔USDT rate, UPI & bank transfer, multiple networks (TRC20, ERC20, BEP20).`,
+      },
     ],
   }),
   component: Landing,
@@ -38,10 +44,7 @@ export const Route = createFileRoute("/")({
 function Landing() {
   const { data: settings } = usePublicSettings();
   const rate = settings?.price ?? 91;
-  const wa = buildWhatsAppUrl(
-    settings?.whatsappNumber ?? "",
-    defaultWhatsAppMessage(settings)
-  );
+  const wa = buildWhatsAppUrl(settings?.whatsappNumber ?? "", defaultWhatsAppMessage(settings));
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -62,12 +65,12 @@ function Hero({ rate, whatsappUrl }: { rate: number; whatsappUrl: string }) {
         <div className="absolute inset-0 grid-bg opacity-40" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full blur-3xl opacity-30 gradient-primary" />
       </div>
-      <div className="container mx-auto px-4 pt-16 md:pt-24 pb-12">
+      <div className="container mx-auto px-4 pt-6 sm:pt-12 md:pt-24 pb-12">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6 animate-fade-up">
             <HeroBrandWordmark />
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs font-medium">
-              <Sparkles className="h-3.5 w-3.5 text-accent" />
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass text-sm font-semibold animate-sell-price-glow">
+              <Sparkles className="h-4 w-4 text-accent" />
               <span className="text-secondary">Live rate today</span>
               <span className="text-foreground inline-flex items-center gap-1">
                 <InrPerUsdtRate inr={rate} size="xs" />
@@ -81,19 +84,35 @@ function Hero({ rate, whatsappUrl }: { rate: number; whatsappUrl: string }) {
               Instantly in India
             </h1>
             <p className="text-lg text-secondary max-w-xl">
-              Fast · Secure · Trusted. The premium gateway for digital assets — built for speed, designed for trust.
+              Fast · Secure · Trusted. The premium gateway for digital assets — built for speed,
+              designed for trust.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="gradient-primary border-0 hover-glow text-base h-12 px-7">
-                <Link to="/register">Get Started <ArrowRight className="ml-1 h-4 w-4" /></Link>
+              <Button
+                asChild
+                size="lg"
+                className="gradient-primary border-0 hover-glow text-base h-12 px-7"
+              >
+                <Link to="/register">
+                  Get Started <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="h-12 px-7 glass border-border/60">
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="h-12 px-7 glass border-border/60"
+              >
                 <Link to="/login">I have an account</Link>
               </Button>
             </div>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><Shield className="h-4 w-4 text-success" /> Bank-grade security</span>
-              <span className="flex items-center gap-1.5"><Zap className="h-4 w-4 text-accent" /> Instant settlement</span>
+              <span className="flex items-center gap-1.5">
+                <Shield className="h-4 w-4 text-success" /> Bank-grade security
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Zap className="h-4 w-4 text-accent" /> Instant settlement
+              </span>
               <Link to="/contact" className="text-accent hover:underline">
                 Contact us
               </Link>
@@ -158,13 +177,18 @@ function LandingBuyStepCard({ rate }: { rate: number }) {
 
 function Steps() {
   const items: { icon: LucideIcon; title: string; desc: ReactNode }[] = [
-    { icon: UserPlus, title: "Create Account", desc: "Sign up in 60 seconds with your email & mobile." },
+    {
+      icon: UserPlus,
+      title: "Create Account",
+      desc: "Sign up in 60 seconds with your email & mobile.",
+    },
     {
       icon: Wallet,
       title: "Enter Amount",
       desc: (
         <>
-          Type INR — see <UsdtWord size="xs" className="font-semibold text-foreground" /> instantly at the live rate.
+          Type INR — see <UsdtWord size="xs" className="font-semibold text-foreground" /> instantly
+          at the live rate.
         </>
       ),
     },
@@ -174,7 +198,8 @@ function Steps() {
       title: "Receive Funds",
       desc: (
         <>
-          <UsdtWord size="xs" className="font-semibold text-foreground" /> lands in your wallet on the chosen network.
+          <UsdtWord size="xs" className="font-semibold text-foreground" /> lands in your wallet on
+          the chosen network.
         </>
       ),
     },
@@ -183,13 +208,22 @@ function Steps() {
     <section className="container mx-auto px-4 py-20">
       <div className="text-center max-w-2xl mx-auto mb-12">
         <div className="text-xs uppercase tracking-widest text-accent mb-3">How it works</div>
-        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Four steps. Done in minutes.</h2>
-        <p className="text-secondary mt-3">A streamlined flow built for first-time and power users alike.</p>
+        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+          Four steps. Done in minutes.
+        </h2>
+        <p className="text-secondary mt-3">
+          A streamlined flow built for first-time and power users alike.
+        </p>
       </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {items.map((it, i) => (
-          <div key={it.title} className="glass rounded-2xl p-6 hover-lift relative overflow-hidden group">
-            <div className="absolute top-3 right-4 text-5xl font-bold text-foreground/5">{i + 1}</div>
+          <div
+            key={it.title}
+            className="glass rounded-2xl p-6 hover-lift relative overflow-hidden group"
+          >
+            <div className="absolute top-3 right-4 text-5xl font-bold text-foreground/5">
+              {i + 1}
+            </div>
             <div className="h-11 w-11 rounded-xl gradient-primary grid place-items-center mb-4 group-hover:scale-105 transition-transform">
               <it.icon className="h-5 w-5 text-white" />
             </div>
@@ -214,11 +248,16 @@ function Trust() {
       <div className="glass-strong rounded-3xl p-8 sm:p-10">
         <div className="text-center mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold">Trusted by 10,000+ users across India</h2>
-          <p className="text-secondary mt-2 text-sm">Built on a foundation of speed, security, and reliability.</p>
+          <p className="text-secondary mt-2 text-sm">
+            Built on a foundation of speed, security, and reliability.
+          </p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((s) => (
-            <div key={s.label} className="rounded-2xl bg-surface p-5 text-center hover-lift border border-border/40">
+            <div
+              key={s.label}
+              className="rounded-2xl bg-surface p-5 text-center hover-lift border border-border/40"
+            >
               <div className="h-10 w-10 mx-auto rounded-xl bg-primary/10 grid place-items-center mb-3">
                 <s.icon className="h-5 w-5 text-accent" />
               </div>

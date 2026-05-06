@@ -24,9 +24,11 @@ import { Route as AppWithdrawRouteImport } from './routes/app.withdraw'
 import { Route as AppTransactionsRouteImport } from './routes/app.transactions'
 import { Route as AppTransactionRouteImport } from './routes/app.transaction'
 import { Route as AppSellRouteImport } from './routes/app.sell'
+import { Route as AppRefundsRouteImport } from './routes/app.refunds'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppMoreRouteImport } from './routes/app.more'
 import { Route as AppBuyRouteImport } from './routes/app.buy'
+import { Route as AppRefundsIdRouteImport } from './routes/app.refunds.$id'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -103,6 +105,11 @@ const AppSellRoute = AppSellRouteImport.update({
   path: '/sell',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRefundsRoute = AppRefundsRouteImport.update({
+  id: '/refunds',
+  path: '/refunds',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -117,6 +124,11 @@ const AppBuyRoute = AppBuyRouteImport.update({
   id: '/buy',
   path: '/buy',
   getParentRoute: () => AppRoute,
+} as any)
+const AppRefundsIdRoute = AppRefundsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppRefundsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -133,11 +145,13 @@ export interface FileRoutesByFullPath {
   '/app/buy': typeof AppBuyRoute
   '/app/more': typeof AppMoreRoute
   '/app/profile': typeof AppProfileRoute
+  '/app/refunds': typeof AppRefundsRouteWithChildren
   '/app/sell': typeof AppSellRoute
   '/app/transaction': typeof AppTransactionRoute
   '/app/transactions': typeof AppTransactionsRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app/': typeof AppIndexRoute
+  '/app/refunds/$id': typeof AppRefundsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -152,11 +166,13 @@ export interface FileRoutesByTo {
   '/app/buy': typeof AppBuyRoute
   '/app/more': typeof AppMoreRoute
   '/app/profile': typeof AppProfileRoute
+  '/app/refunds': typeof AppRefundsRouteWithChildren
   '/app/sell': typeof AppSellRoute
   '/app/transaction': typeof AppTransactionRoute
   '/app/transactions': typeof AppTransactionsRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app': typeof AppIndexRoute
+  '/app/refunds/$id': typeof AppRefundsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -173,11 +189,13 @@ export interface FileRoutesById {
   '/app/buy': typeof AppBuyRoute
   '/app/more': typeof AppMoreRoute
   '/app/profile': typeof AppProfileRoute
+  '/app/refunds': typeof AppRefundsRouteWithChildren
   '/app/sell': typeof AppSellRoute
   '/app/transaction': typeof AppTransactionRoute
   '/app/transactions': typeof AppTransactionsRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app/': typeof AppIndexRoute
+  '/app/refunds/$id': typeof AppRefundsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -195,11 +213,13 @@ export interface FileRouteTypes {
     | '/app/buy'
     | '/app/more'
     | '/app/profile'
+    | '/app/refunds'
     | '/app/sell'
     | '/app/transaction'
     | '/app/transactions'
     | '/app/withdraw'
     | '/app/'
+    | '/app/refunds/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -214,11 +234,13 @@ export interface FileRouteTypes {
     | '/app/buy'
     | '/app/more'
     | '/app/profile'
+    | '/app/refunds'
     | '/app/sell'
     | '/app/transaction'
     | '/app/transactions'
     | '/app/withdraw'
     | '/app'
+    | '/app/refunds/$id'
   id:
     | '__root__'
     | '/'
@@ -234,11 +256,13 @@ export interface FileRouteTypes {
     | '/app/buy'
     | '/app/more'
     | '/app/profile'
+    | '/app/refunds'
     | '/app/sell'
     | '/app/transaction'
     | '/app/transactions'
     | '/app/withdraw'
     | '/app/'
+    | '/app/refunds/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -361,6 +385,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSellRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/refunds': {
+      id: '/app/refunds'
+      path: '/refunds'
+      fullPath: '/app/refunds'
+      preLoaderRoute: typeof AppRefundsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/profile': {
       id: '/app/profile'
       path: '/profile'
@@ -382,13 +413,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBuyRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/refunds/$id': {
+      id: '/app/refunds/$id'
+      path: '/$id'
+      fullPath: '/app/refunds/$id'
+      preLoaderRoute: typeof AppRefundsIdRouteImport
+      parentRoute: typeof AppRefundsRoute
+    }
   }
 }
+
+interface AppRefundsRouteChildren {
+  AppRefundsIdRoute: typeof AppRefundsIdRoute
+}
+
+const AppRefundsRouteChildren: AppRefundsRouteChildren = {
+  AppRefundsIdRoute: AppRefundsIdRoute,
+}
+
+const AppRefundsRouteWithChildren = AppRefundsRoute._addFileChildren(
+  AppRefundsRouteChildren,
+)
 
 interface AppRouteChildren {
   AppBuyRoute: typeof AppBuyRoute
   AppMoreRoute: typeof AppMoreRoute
   AppProfileRoute: typeof AppProfileRoute
+  AppRefundsRoute: typeof AppRefundsRouteWithChildren
   AppSellRoute: typeof AppSellRoute
   AppTransactionRoute: typeof AppTransactionRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
@@ -400,6 +451,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppBuyRoute: AppBuyRoute,
   AppMoreRoute: AppMoreRoute,
   AppProfileRoute: AppProfileRoute,
+  AppRefundsRoute: AppRefundsRouteWithChildren,
   AppSellRoute: AppSellRoute,
   AppTransactionRoute: AppTransactionRoute,
   AppTransactionsRoute: AppTransactionsRoute,

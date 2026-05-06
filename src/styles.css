@@ -45,6 +45,7 @@
   --animate-float: float 6s ease-in-out infinite;
   --animate-gradient: gradient-x 8s ease infinite;
   --animate-sell-rate: sell-rate-emphasis 2.6s ease-in-out infinite;
+  --animate-reject-reason: reject-reason 1.8s ease-in-out infinite;
 
   @keyframes sell-rate-emphasis {
     0%,
@@ -97,6 +98,39 @@
   @keyframes pulse-glow {
     0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 40%, transparent); }
     50% { box-shadow: 0 0 30px 6px color-mix(in oklab, var(--primary) 30%, transparent); }
+  }
+  @keyframes reject-reason {
+    0%,
+    100% {
+      box-shadow:
+        0 0 18px -6px color-mix(in oklab, var(--destructive) 55%, transparent),
+        inset 0 0 0 1px color-mix(in oklab, var(--destructive) 35%, transparent);
+      transform: translateY(0);
+      opacity: 1;
+    }
+    50% {
+      box-shadow:
+        0 0 28px -4px color-mix(in oklab, var(--destructive) 70%, transparent),
+        inset 0 0 0 1px color-mix(in oklab, var(--destructive) 50%, transparent);
+      transform: translateY(-1px);
+      opacity: 0.96;
+    }
+  }
+  @keyframes reject-reason-soft {
+    from {
+      box-shadow:
+        0 0 22px -6px color-mix(in oklab, var(--destructive) 60%, transparent),
+        inset 0 0 0 1px color-mix(in oklab, var(--destructive) 30%, transparent);
+      transform: translateY(-1px);
+      opacity: 0.96;
+    }
+    to {
+      box-shadow:
+        0 0 10px -10px color-mix(in oklab, var(--destructive) 40%, transparent),
+        inset 0 0 0 1px color-mix(in oklab, var(--destructive) 18%, transparent);
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
   @keyframes float {
     0%, 100% { transform: translateY(0); }
@@ -259,5 +293,14 @@
 
   .animate-sell-price-glow {
     animation: sell-price-glow 2.8s ease-in-out infinite;
+  }
+
+  .animate-reject-reason {
+    animation: reject-reason 1.8s ease-in-out infinite;
+  }
+
+  /* Subtle one-shot attention (use on refund pages) */
+  .animate-reject-reason-soft {
+    animation: reject-reason-soft 550ms ease-out 1;
   }
 }

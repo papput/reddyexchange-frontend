@@ -157,7 +157,8 @@ function PaymentProofCard({ url }: { url: string }) {
     <Section title="Your payment screenshot">
       <div className="p-4 space-y-3 bg-muted/20">
         <p className="text-xs text-muted-foreground">
-          This is the proof image you attached with your request. Tap the image to open the full file.
+          This is the proof image you attached with your request. Tap the image to open the full
+          file.
         </p>
         <a
           href={trimmed}
@@ -205,8 +206,12 @@ function BuyDetail({ kind, d }: { kind: "buy"; d: Record<string, unknown> }) {
       <div className="rounded-2xl border border-border/70 bg-gradient-to-br from-primary/10 via-surface/80 to-surface p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Buy order</p>
-            <p className="text-lg font-bold tracking-tight mt-0.5">{fmtINR(Number(d.amountINR ?? 0))}</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+              Buy order
+            </p>
+            <p className="text-lg font-bold tracking-tight mt-0.5">
+              {fmtINR(Number(d.amountINR ?? 0))}
+            </p>
             <p className="text-sm text-secondary mt-1 inline-flex items-center gap-1 flex-wrap">
               → <FormattedUsdt value={Number(d.usdtAmount ?? 0)} size="xs" /> net
             </p>
@@ -231,11 +236,15 @@ function BuyDetail({ kind, d }: { kind: "buy"; d: Record<string, unknown> }) {
           label="Blockchain fee"
           value={<RawAmountUsdt amountText={String(d.exchangeFeeUsdt ?? "0")} size="xs" />}
         />
-        <DetailRow label="Buy asset" value={<span className="capitalize">{String(d.buyAsset ?? "—")}</span>} />
+        <DetailRow
+          label="Buy asset"
+          value={<span className="capitalize">{String(d.buyAsset ?? "—")}</span>}
+        />
         <DetailRow
           label={
             <span className="inline-flex items-center gap-1">
-              Rate (₹/<UsdtWord size="2xs" />)
+              Rate (₹/
+              <UsdtWord size="2xs" />)
             </span>
           }
           value={String(d.price ?? "—")}
@@ -246,7 +255,12 @@ function BuyDetail({ kind, d }: { kind: "buy"; d: Record<string, unknown> }) {
       <Section title="Payment">
         <DetailRow label="Method" value={String(d.paymentMethod ?? "—")} />
         <DetailRow label="Channel" value={String(d.paymentChannel ?? "—")} />
-        <DetailRow label="UTR / reference" value={String(d.utrNumber ?? "—")} copyable={String(d.utrNumber || "")} copyLabel="UTR" />
+        <DetailRow
+          label="UTR / reference"
+          value={String(d.utrNumber ?? "—")}
+          copyable={String(d.utrNumber || "")}
+          copyLabel="UTR"
+        />
       </Section>
 
       <Section title="Delivery">
@@ -273,11 +287,15 @@ function SellDetail({ kind, d }: { kind: "sell"; d: Record<string, unknown> }) {
       <div className="rounded-2xl border border-border/70 bg-gradient-to-br from-emerald-500/10 via-surface/80 to-surface p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Sell request</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+              Sell request
+            </p>
             <p className="text-lg font-bold tracking-tight mt-0.5 inline-flex items-center gap-1">
               <FormattedUsdt value={Number(d.usdtAmount ?? 0)} />
             </p>
-            <p className="text-sm text-secondary mt-1">Payout ≈ {fmtINR(Number(d.amountINR ?? 0))}</p>
+            <p className="text-sm text-secondary mt-1">
+              Payout ≈ {fmtINR(Number(d.amountINR ?? 0))}
+            </p>
           </div>
           <TxnStatusPill status={uiStatus} size="lg" />
         </div>
@@ -299,7 +317,11 @@ function SellDetail({ kind, d }: { kind: "sell"; d: Record<string, unknown> }) {
 
       <Section title="Your payout">
         <DetailRow label="Method" value={String(d.payoutMethod ?? "—")} />
-        <DetailRow label="UPI ID" value={String(d.upiId || "—")} copyable={d.upiId ? String(d.upiId) : undefined} />
+        <DetailRow
+          label="UPI ID"
+          value={String(d.upiId || "—")}
+          copyable={d.upiId ? String(d.upiId) : undefined}
+        />
         <DetailRow label="Bank details" value={String(d.bankDetails || "—")} />
       </Section>
 
@@ -343,13 +365,16 @@ function SellDetail({ kind, d }: { kind: "sell"; d: Record<string, unknown> }) {
 function WithdrawalDetail({ kind, d }: { kind: "withdrawal"; d: Record<string, unknown> }) {
   const st = String(d.status || "pending");
   const uiStatus = normalizeDetailStatus(kind, st);
+  const rejectReason = d.rejectReason != null ? String(d.rejectReason) : "";
 
   return (
     <>
       <div className="rounded-2xl border border-border/70 bg-gradient-to-br from-violet-500/10 via-surface/80 to-surface p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Withdrawal</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+              Withdrawal
+            </p>
             <p className="text-lg font-bold tracking-tight mt-0.5 inline-flex items-center gap-1">
               <FormattedUsdt value={Number(d.amountUsdt ?? 0)} />
             </p>
@@ -359,6 +384,13 @@ function WithdrawalDetail({ kind, d }: { kind: "withdrawal"; d: Record<string, u
         </div>
       </div>
 
+      {st === "rejected" && rejectReason ? (
+        <div className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm animate-reject-reason-soft">
+          <p className="font-semibold text-destructive">Withdrawal rejected</p>
+          <p className="text-destructive/90 mt-1 break-words">{rejectReason}</p>
+        </div>
+      ) : null}
+
       <Section title="Details">
         <DetailRow label="Status" value={<span className="capitalize">{st}</span>} />
         <DetailRow label="Network" value={String(d.network ?? "—")} />
@@ -367,12 +399,17 @@ function WithdrawalDetail({ kind, d }: { kind: "withdrawal"; d: Record<string, u
           value={String(d.walletAddress ?? "—")}
           copyable={d.walletAddress ? String(d.walletAddress) : undefined}
         />
-        <DetailRow label="TXID (after approval)" value={String(d.txid || "—")} copyable={d.txid ? String(d.txid) : undefined} />
+        <DetailRow
+          label="TXID (after approval)"
+          value={String(d.txid || "—")}
+          copyable={d.txid ? String(d.txid) : undefined}
+        />
         <DetailRow label="Requested" value={formatWhen(d)} />
       </Section>
 
       <p className="text-xs text-muted-foreground px-1">
-        Withdrawals do not include a payment screenshot. Status updates when the team processes your request.
+        Withdrawals do not include a payment screenshot. Status updates when the team processes your
+        request.
       </p>
     </>
   );

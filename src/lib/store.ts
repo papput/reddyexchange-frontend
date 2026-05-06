@@ -14,7 +14,7 @@ export function usdtToInr(usdt: number, rate = DEFAULT_RATE) {
 
 function chainFeeUsdt(
   network: "TRC20" | "ERC20" | "BEP20",
-  fees: { TRC20: number; ERC20: number; BEP20: number }
+  fees: { TRC20: number; ERC20: number; BEP20: number },
 ) {
   const fee = network === "ERC20" ? fees.ERC20 : network === "BEP20" ? fees.BEP20 : fees.TRC20;
   return Number.isFinite(fee) && fee > 0 ? fee : 0;
@@ -26,7 +26,7 @@ export function estimateBuyUsdt(
   price: number,
   network: "TRC20" | "ERC20" | "BEP20",
   fees: { TRC20: number; ERC20: number; BEP20: number },
-  buyAsset: "standard" | "pex" = "standard"
+  buyAsset: "standard" | "pex" = "standard",
 ) {
   const gross = Number((amountINR / price).toFixed(6));
   if (buyAsset === "pex") return gross;
@@ -40,7 +40,7 @@ export function estimateInrFromNetUsdt(
   price: number,
   network: "TRC20" | "ERC20" | "BEP20",
   fees: { TRC20: number; ERC20: number; BEP20: number },
-  buyAsset: "standard" | "pex" = "standard"
+  buyAsset: "standard" | "pex" = "standard",
 ) {
   if (!Number.isFinite(netUsdt) || netUsdt < 0 || !Number.isFinite(price) || price <= 0) return 0;
   if (buyAsset === "pex") return Number((netUsdt * price).toFixed(2));
@@ -50,7 +50,11 @@ export function estimateInrFromNetUsdt(
 }
 
 export function fmtINR(n: number) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(n);
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(n);
 }
 export function fmtUSDT(n: number) {
   return `${n.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} USDT`;
@@ -103,8 +107,16 @@ export type Txn = {
   /** Buy only: `pex` = on-platform token; `standard` = USDT. */
   buyAsset?: "standard" | "pex";
   walletAddress?: string;
+  /** Withdrawal only: present when status is failed/rejected */
+  rejectReason?: string;
   payMethod: PayMethod;
-  payDetails?: { upiId?: string; accountName?: string; accountNumber?: string; ifsc?: string; bank?: string };
+  payDetails?: {
+    upiId?: string;
+    accountName?: string;
+    accountNumber?: string;
+    ifsc?: string;
+    bank?: string;
+  };
   utr?: string;
   proofName?: string;
   status: TxnStatus;
@@ -227,8 +239,10 @@ export function mapMergedApiTxn(raw: Record<string, unknown>): Txn | null {
 
   if (t === "withdrawal") {
     const st = String(raw.status || "pending");
-    const status: TxnStatus = st === "approved" ? "completed" : st === "rejected" ? "failed" : "pending";
+    const status: TxnStatus =
+      st === "approved" ? "completed" : st === "rejected" ? "failed" : "pending";
     const net = String(raw.network || "TRC20") as Network;
+    const rr = raw.rejectReason != null ? String(raw.rejectReason) : "";
     return {
       documentId,
       id: documentId,
@@ -237,6 +251,7 @@ export function mapMergedApiTxn(raw: Record<string, unknown>): Txn | null {
       usdt: Number(raw.amountUsdt ?? 0),
       network: net,
       payMethod: "bank",
+      rejectReason: rr || undefined,
       status,
       createdAt,
     };
@@ -244,7 +259,8 @@ export function mapMergedApiTxn(raw: Record<string, unknown>): Txn | null {
 
   if (t === "buy") {
     const st = String(raw.status || "pending");
-    const status: TxnStatus = st === "completed" ? "completed" : st === "rejected" ? "failed" : "pending";
+    const status: TxnStatus =
+      st === "completed" ? "completed" : st === "rejected" ? "failed" : "pending";
     const net = String(raw.network || "TRC20") as Network;
     const ba = raw.buyAsset === "pex" || raw.buyAsset === "standard" ? raw.buyAsset : undefined;
     const orderId = raw.orderId != null ? String(raw.orderId) : "";
@@ -266,7 +282,13 @@ export function mapMergedApiTxn(raw: Record<string, unknown>): Txn | null {
   if (t === "sell") {
     const st = String(raw.status || "pending");
     const status: TxnStatus =
-      st === "paid" ? "completed" : st === "rejected" ? "failed" : st === "processing" ? "pending" : "pending";
+      st === "paid"
+        ? "completed"
+        : st === "rejected"
+          ? "failed"
+          : st === "processing"
+            ? "pending"
+            : "pending";
     const net = String(raw.network || "TRC20") as Network;
     return {
       documentId,

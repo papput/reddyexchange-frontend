@@ -11,6 +11,7 @@ import {
   Receipt,
   ChevronRight,
   KeyRound,
+  RefreshCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +38,12 @@ function ProfilePage() {
   const [changePwdOpen, setChangePwdOpen] = useState(false);
   if (!auth) return null;
   const u = auth.user;
-  const initials = u.fullName.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  const initials = u.fullName
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
   const memberSince = new Date(u.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" });
 
   const bal = u.primeExchUsdtBalance ?? 0;
@@ -45,16 +51,22 @@ function ProfilePage() {
   return (
     <div className="space-y-6">
       <div className="glass-strong rounded-2xl p-6 flex items-center gap-4">
-        <div className="h-16 w-16 rounded-2xl gradient-primary grid place-items-center text-xl font-bold shrink-0">{initials}</div>
+        <div className="h-16 w-16 rounded-2xl gradient-primary grid place-items-center text-xl font-bold shrink-0">
+          {initials}
+        </div>
         <div className="min-w-0 flex-1 space-y-2">
           <div>
             <div className="font-semibold text-lg truncate">{u.fullName}</div>
-            <div className="text-xs text-secondary flex items-center gap-1.5"><ShieldCheck className="h-3 w-3 text-success" /> Verified account</div>
+            <div className="text-xs text-secondary flex items-center gap-1.5">
+              <ShieldCheck className="h-3 w-3 text-success" /> Verified account
+            </div>
           </div>
           <div className="flex items-center gap-2 pt-1 border-t border-border/50">
             <Wallet className="h-4 w-4 text-accent shrink-0" />
             <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{site.coinName}</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                {site.coinName}
+              </div>
               <div className="text-base font-bold tabular-nums inline-flex items-center gap-1">
                 <FormattedUsdt value={bal} />
               </div>
@@ -80,7 +92,9 @@ function ProfilePage() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-medium text-sm">Change password</div>
-              <div className="text-xs text-muted-foreground">OTP to your registered mobile, then set a new password</div>
+              <div className="text-xs text-muted-foreground">
+                OTP to your registered mobile, then set a new password
+              </div>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
           </button>
@@ -89,7 +103,8 @@ function ProfilePage() {
           <DialogHeader>
             <DialogTitle>Change password</DialogTitle>
             <DialogDescription>
-              We send a 6-digit code to the mobile number on your account. Then choose a new password.
+              We send a 6-digit code to the mobile number on your account. Then choose a new
+              password.
             </DialogDescription>
           </DialogHeader>
           {changePwdOpen ? (
@@ -133,17 +148,48 @@ function ProfilePage() {
         <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
       </Link>
 
-      <Button variant="outline" className="w-full glass border-border/60 h-11 text-destructive hover:text-destructive" onClick={() => { logout(); nav({ to: "/" }); }}>
+      <Link
+        to="/app/refunds"
+        className="glass rounded-2xl p-4 flex items-center gap-3 hover:bg-surface/60 transition border border-border/50"
+      >
+        <div className="h-10 w-10 rounded-xl bg-rose-500/15 grid place-items-center shrink-0">
+          <RefreshCcw className="h-5 w-5 text-rose-300" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-sm">Refunds</div>
+          <div className="text-xs text-muted-foreground">Request refund for your buys</div>
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+      </Link>
+
+      <Button
+        variant="outline"
+        className="w-full glass border-border/60 h-11 text-destructive hover:text-destructive"
+        onClick={() => {
+          logout();
+          nav({ to: "/" });
+        }}
+      >
         <LogOut className="h-4 w-4 mr-2" /> Logout
       </Button>
     </div>
   );
 }
 
-function Info({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function Info({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="flex items-center gap-3">
-      <div className="h-9 w-9 rounded-xl bg-surface grid place-items-center"><Icon className="h-4 w-4 text-accent" /></div>
+      <div className="h-9 w-9 rounded-xl bg-surface grid place-items-center">
+        <Icon className="h-4 w-4 text-accent" />
+      </div>
       <div className="min-w-0">
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
         <div className="text-sm font-medium truncate">{value}</div>

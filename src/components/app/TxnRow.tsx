@@ -65,6 +65,11 @@ export function TxnRow({ txn }: { txn: Txn }) {
             )}
           </div>
           <div className="text-xs text-muted-foreground truncate">{sub}</div>
+          {isWithdrawal && txn.status === "failed" && txn.rejectReason ? (
+            <div className="text-xs text-destructive mt-1 animate-fade-in truncate">
+              {txn.rejectReason}
+            </div>
+          ) : null}
         </div>
       </div>
       <div className="text-right shrink-0 flex items-center gap-2 pl-2">

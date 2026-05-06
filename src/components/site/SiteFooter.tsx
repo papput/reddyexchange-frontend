@@ -56,7 +56,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} {site.siteName}. All rights reserved.
+        © 2023 {site.siteName}. All rights reserved.
       </div>
     </footer>
   );
