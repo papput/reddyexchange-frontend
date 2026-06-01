@@ -12,6 +12,7 @@ import { usePublicSettings } from "@/hooks/use-public-settings";
 import {
   apiConfirmAutoUpi,
   apiCreateBuy,
+  apiGetAutoUpiDraft,
   apiInitiateAutoUpi,
   apiTrackBuyStep,
   getApiErrorMessage,
@@ -41,6 +42,24 @@ const FALLBACK_MIN_INR = 2000;
 const STEP_LABELS = ["Payment & asset", "Amount", "Pay", "Proof", "Done"];
 const TOTAL_STEPS = 5;
 const BUY_AUTO_SESSION_KEY = "neon_buy_auto_order_v1";
+
+type BuyAutoSession = { orderId: string; awaitingReturn?: boolean };
+
+function readBuyAutoSession(): BuyAutoSession | null {
+  try {
+    const raw = sessionStorage.getItem(BUY_AUTO_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as BuyAutoSession;
+    if (!parsed?.orderId) return null;
+    return { orderId: String(parsed.orderId), awaitingReturn: Boolean(parsed.awaitingReturn) };
+  } catch {
+    return null;
+  }
+}
+
+function writeBuyAutoSession(data: BuyAutoSession) {
+  sessionStorage.setItem(BUY_AUTO_SESSION_KEY, JSON.stringify(data));
+}
 
 function fmtUsdtAmount(n: number) {
   return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -205,31 +224,26 @@ function BuyFlow() {
       qs.get("mOrderId") ||
       qs.get("m_order_id");
 
-    let storedOid: string | null = null;
-    try {
-      const raw = sessionStorage.getItem(BUY_AUTO_SESSION_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as { orderId?: string };
-        if (parsed.orderId != null) storedOid = String(parsed.orderId);
-      }
-    } catch {
-      storedOid = null;
-    }
+    const session = readBuyAutoSession();
+    const storedOid = session?.orderId ?? null;
 
     if (!oid && (resume || successFlag) && storedOid) oid = storedOid;
+    // Cowpay return_url has no query string — restore pending order from sessionStorage
+    if (!oid && session?.awaitingReturn && storedOid) oid = storedOid;
 
-    const fromGateway = (resume || successFlag) && !!oid;
     const hasOrderInQs =
       qs.has("order_id") ||
       qs.has("orderId") ||
       qs.has("mOrderId") ||
       qs.has("m_order_id");
+    const fromGateway = (resume || successFlag) && !!oid;
     const sessionMatches = !!oid && !!storedOid && String(oid) === String(storedOid) && hasOrderInQs;
+    const fromCowpayReturn = !!oid && !!storedOid && session?.awaitingReturn;
 
-    if ((fromGateway || sessionMatches) && oid) {
+    if ((fromGateway || sessionMatches || fromCowpayReturn) && oid) {
       setAutoPayOrderId(String(oid));
       setStep(4);
-      sessionStorage.setItem(BUY_AUTO_SESSION_KEY, JSON.stringify({ orderId: String(oid) }));
+      writeBuyAutoSession({ orderId: String(oid), awaitingReturn: false });
     }
 
     const stripQs = resume || successFlag || hasOrderInQs;
@@ -237,6 +251,16 @@ function BuyFlow() {
       window.history.replaceState({}, "", window.location.pathname + window.location.hash);
     }
   }, []);
+
+  useEffect(() => {
+    if (!autoPayOrderId || !auth?.token) return;
+    void apiGetAutoUpiDraft(autoPayOrderId)
+      .then(({ data }) => {
+        const webhookUtr = String(data.data?.webhookUtr || "").trim();
+        if (webhookUtr.length >= 6) setUtr((prev) => (prev.trim() ? prev : webhookUtr));
+      })
+      .catch(() => {});
+  }, [autoPayOrderId, auth?.token]);
 
   const inrRoundedForGateway = Math.round(Number(inr));
 
@@ -260,7 +284,11 @@ function BuyFlow() {
       const url = data.data?.redirectUrl;
       const oid = data.data?.orderId;
       if (!url || !oid) throw new Error("Invalid payment response");
-      sessionStorage.setItem(BUY_AUTO_SESSION_KEY, JSON.stringify({ orderId: oid }));
+      const warnings = data.data?.warnings;
+      if (warnings?.length) {
+        warnings.forEach((w) => toast.info(w, { duration: 8000 }));
+      }
+      writeBuyAutoSession({ orderId: oid, awaitingReturn: true });
       window.location.assign(url);
     } catch (e) {
       toast.error(getApiErrorMessage(e));

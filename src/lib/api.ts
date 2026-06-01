@@ -324,8 +324,23 @@ export async function apiInitiateAutoUpi(body: {
 }) {
   return apiPost<{
     success: boolean;
-    data: { provider: string; orderId: string; redirectUrl: string };
+    data: { provider: string; orderId: string; redirectUrl: string; warnings?: string[] };
   }>("/buy/upi/auto/initiate", body);
+}
+
+export async function apiGetAutoUpiDraft(orderId: string) {
+  const q = new URLSearchParams({ orderId });
+  return apiGet<{
+    success: boolean;
+    data: {
+      orderId: string;
+      provider: string;
+      cowpayPayment: boolean;
+      silkpayPayment: boolean;
+      webhookUtr: string;
+      amountINR: number;
+    };
+  }>(`/buy/upi/auto/draft?${q}`);
 }
 
 /** After user pays on gateway: UTR + screenshot → final buy transaction. */
