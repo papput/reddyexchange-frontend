@@ -315,7 +315,7 @@ export async function apiGetBuyHistory(page = 1, limit = 200) {
   }>(`/buy/history?${q}`);
 }
 
-/** Creates a draft and returns gateway URL (Cowpay or SilkPay per server settings). */
+/** Creates a draft and returns gateway URL or manual UPI fallback (server-side backup chain). */
 export async function apiInitiateAutoUpi(body: {
   amountINR: number;
   network: string;
@@ -324,7 +324,12 @@ export async function apiInitiateAutoUpi(body: {
 }) {
   return apiPost<{
     success: boolean;
-    data: { provider: string; orderId: string; redirectUrl: string; warnings?: string[] };
+    data: {
+      payMode: "gateway" | "manual";
+      orderId: string;
+      redirectUrl?: string;
+      manualUpiId?: string;
+    };
   }>("/buy/upi/auto/initiate", body);
 }
 

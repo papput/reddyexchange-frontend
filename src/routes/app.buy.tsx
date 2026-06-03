@@ -170,6 +170,7 @@ function BuyFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [autoPayOrderId, setAutoPayOrderId] = useState<string | null>(null);
+  const [manualFallbackPay, setManualFallbackPay] = useState(false);
   const [gatewayLoading, setGatewayLoading] = useState(false);
   /** Which field user last edited for INR ↔ USDT sync */
   const [amountLead, setAmountLead] = useState<"inr" | "usdt">("inr");
@@ -205,8 +206,8 @@ function BuyFlow() {
   }, [auth?.token, step, inr]);
 
   useEffect(() => {
-    if (step === 3 && autoPayOrderId) setStep(4);
-  }, [step, autoPayOrderId]);
+    if (step === 3 && autoPayOrderId && !manualFallbackPay) setStep(4);
+  }, [step, autoPayOrderId, manualFallbackPay]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -281,9 +282,19 @@ function BuyFlow() {
         walletAddress: buyAsset === "pex" ? "" : walletAddress.trim(),
         buyAsset,
       });
-      const url = data.data?.redirectUrl;
       const oid = data.data?.orderId;
-      if (!url || !oid) throw new Error("Invalid payment response");
+      if (!oid) throw new Error("Invalid payment response");
+
+      if (data.data?.payMode === "manual") {
+        setAutoPayOrderId(String(oid));
+        setManualFallbackPay(true);
+        setGatewayLoading(false);
+        return;
+      }
+
+      const url = data.data?.redirectUrl;
+      if (!url) throw new Error("Invalid payment response");
+      setManualFallbackPay(false);
       writeBuyAutoSession({ orderId: oid, awaitingReturn: true });
       window.location.assign(url);
     } catch (e) {
@@ -314,6 +325,7 @@ function BuyFlow() {
   const back = () => {
     if (step === 4 && autoPayOrderId) {
       setAutoPayOrderId(null);
+      setManualFallbackPay(false);
       sessionStorage.removeItem(BUY_AUTO_SESSION_KEY);
       setUtr("");
       setProofFile(null);
@@ -372,6 +384,7 @@ function BuyFlow() {
     setProofFile(null);
     setOrderId("");
     setAutoPayOrderId(null);
+    setManualFallbackPay(false);
     setAmountLead("inr");
     setUsdtInput("");
     sessionStorage.removeItem(BUY_AUTO_SESSION_KEY);
@@ -386,7 +399,7 @@ function BuyFlow() {
   }
 
   const showMainNav = step < 5;
-  const step3NeedsPayOnly = step === 3 && isAutoUpi && payMethod === "upi" && !autoPayOrderId;
+  const step3NeedsPayOnly = step === 3 && isAutoUpi && payMethod === "upi" && !autoPayOrderId && !manualFallbackPay;
 
   return (
     <div>
@@ -442,7 +455,7 @@ function BuyFlow() {
         )}
 
         {step === 3 &&
-          (autoPayOrderId ? (
+          (autoPayOrderId && !manualFallbackPay ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-secondary text-sm">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p>Loading payment confirmation…</p>
@@ -465,6 +478,7 @@ function BuyFlow() {
               whatsappMessage={whatsappMessage}
               upiPayeeName={site.upiPayeeName}
               isAutoUpi={isAutoUpi}
+              manualFallbackPay={manualFallbackPay}
               minInr={minInr}
               gatewayLoading={gatewayLoading}
               onStartAutoUpi={startAutoUpiGateway}
@@ -700,6 +714,7 @@ function StepWalletAndPay({
   whatsappMessage,
   upiPayeeName,
   isAutoUpi,
+  manualFallbackPay,
   minInr,
   gatewayLoading,
   onStartAutoUpi,
@@ -720,6 +735,7 @@ function StepWalletAndPay({
   whatsappMessage: string;
   upiPayeeName: string;
   isAutoUpi: boolean;
+  manualFallbackPay: boolean;
   minInr: number;
   gatewayLoading: boolean;
   onStartAutoUpi: () => void;
@@ -767,6 +783,7 @@ function StepWalletAndPay({
         whatsappMessage={whatsappMessage}
         upiPayeeName={upiPayeeName}
         isAutoUpi={isAutoUpi}
+        manualFallbackPay={manualFallbackPay}
         minInr={minInr}
         gatewayLoading={gatewayLoading}
         onStartAutoUpi={onStartAutoUpi}
@@ -791,6 +808,7 @@ function PaymentInstructions({
   whatsappMessage,
   upiPayeeName,
   isAutoUpi,
+  manualFallbackPay,
   minInr,
   gatewayLoading,
   onStartAutoUpi,
@@ -810,6 +828,7 @@ function PaymentInstructions({
   whatsappMessage: string;
   upiPayeeName: string;
   isAutoUpi: boolean;
+  manualFallbackPay: boolean;
   minInr: number;
   gatewayLoading: boolean;
   onStartAutoUpi: () => void;
@@ -841,7 +860,7 @@ function PaymentInstructions({
   const whatsappHref =
     waDigits.length >= 10 ? `https://wa.me/${waDigits}?text=${encodeURIComponent(bankImpsWhatsappBody)}` : "";
 
-  if (payMethod === "upi" && isAutoUpi) {
+  if (payMethod === "upi" && isAutoUpi && !manualFallbackPay) {
     return (
       <div className="rounded-2xl bg-surface p-5 border border-border space-y-4">
         <p className="text-sm text-secondary">
@@ -870,7 +889,7 @@ function PaymentInstructions({
     );
   }
 
-  if (payMethod === "upi" && !isAutoUpi) {
+  if (payMethod === "upi" && (!isAutoUpi || manualFallbackPay)) {
     return (
       <div className="rounded-2xl bg-surface p-5 border border-border space-y-3">
         <div className="grid sm:grid-cols-[auto,1fr] gap-4 items-center">
