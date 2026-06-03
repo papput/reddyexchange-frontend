@@ -147,8 +147,8 @@ function LandingBuyStepCard({ rate }: { rate: number }) {
   const fees = settings?.exchangeFees ?? { TRC20: 0.5, ERC20: 1, BEP20: 0.7 };
 
   const [payMethod, setPayMethod] = useState<PayMethod>("upi");
-  const [network, setNetwork] = useState<Network>("TRC20");
-  const [buyAsset, setBuyAsset] = useState<BuyAsset>("pex");
+  const [network, setNetwork] = useState<Network>("BEP20");
+  const [buyAsset, setBuyAsset] = useState<BuyAsset>("standard");
 
   const goExchange = () => {
     nav({ to: auth?.token ? "/app/buy" : "/register" });

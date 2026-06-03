@@ -128,7 +128,9 @@ export function PasswordResetOtpFlow({
         <>
           {!hideIdentifierField ? (
             <div className="space-y-1.5">
-              <Label className="text-xs text-secondary uppercase tracking-wide">Email or mobile</Label>
+              <Label className="text-xs text-secondary uppercase tracking-wide">
+                Email or mobile
+              </Label>
               <div className="rounded-xl bg-surface border border-border ring-focus">
                 <Input
                   value={identifier}
@@ -148,10 +150,7 @@ export function PasswordResetOtpFlow({
                   (<span className="font-mono text-foreground">{maskedPhone}</span>)
                 </>
               ) : presetIdentifier ? (
-                <>
-                  {" "}
-                  (••••••••{presetIdentifier.replace(/\D/g, "").slice(-2)})
-                </>
+                <> (••••••••{presetIdentifier.replace(/\D/g, "").slice(-2)})</>
               ) : null}
               .
             </p>
@@ -199,7 +198,9 @@ export function PasswordResetOtpFlow({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-secondary uppercase tracking-wide">Confirm password</Label>
+            <Label className="text-xs text-secondary uppercase tracking-wide">
+              Confirm password
+            </Label>
             <div className="rounded-xl bg-surface border border-border ring-focus">
               <Input
                 type="password"

@@ -303,4 +303,8 @@
   .animate-reject-reason-soft {
     animation: reject-reason-soft 550ms ease-out 1;
   }
+
+  .auth-card-glow {
+    filter: drop-shadow(0 24px 48px -16px color-mix(in oklab, #6C4CFF 35%, transparent));
+  }
 }

@@ -19,10 +19,9 @@ function ContactRoute() {
   return (
     <InfoPage title="Contact us" kicker="We're here to help" showHelpStrip={false}>
       <p>
-        Our team uses the channels below. WhatsApp message text is prefilled from your admin settings so we can help you
-        faster.
+        Reach us by email, WhatsApp, or phone. WhatsApp opens with a prefilled message so we can help you faster.
       </p>
-      <ContactChannels settings={settings} includeContactPageLink={false} showPaymentChannels />
+      <ContactChannels settings={settings} includeContactPageLink={false} showPaymentChannels={false} />
     </InfoPage>
   );
 }

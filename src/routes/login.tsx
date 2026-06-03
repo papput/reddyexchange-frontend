@@ -2,14 +2,14 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { AuthShell } from "@/components/auth/AuthShell";
+import { AuthFooterLink, AuthShell } from "@/components/auth/AuthShell";
+import { AuthField } from "@/components/auth/AuthField";
+import { AuthSubmitButton } from "@/components/auth/AuthSubmitButton";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { apiLogin, getApiErrorMessage } from "@/lib/api";
 import { SESSION_EXPIRED_FLASH_KEY } from "@/lib/constants";
 import { normalizeApiUser, setAuth } from "@/lib/store";
-import { Loader2 } from "lucide-react";
+import { Lock, Shield, UserRound } from "lucide-react";
 import { site } from "@/config/site";
 
 export const Route = createFileRoute("/login")({
@@ -69,57 +69,47 @@ function LoginPage() {
 
   return (
     <AuthShell
+      variant="login"
       title="Welcome back"
-      subtitle={`Login to access your ${site.siteName} dashboard`}
+      subtitle={`Access your ${site.siteName} dashboard — buy, sell, withdraw, and track every order in one place.`}
       footer={
         <>
-          New here?{" "}
-          <Link to="/register" className="text-accent hover:underline">
-            Create account
-          </Link>
+          New here? <AuthFooterLink to="/register">Create a free account</AuthFooterLink>
         </>
       }
     >
-      <form onSubmit={submit} className="space-y-4">
-        <Field label="Email or Mobile">
+      <form onSubmit={submit} className="space-y-5">
+        <AuthField label="Email or mobile" icon={UserRound}>
           <Input
             value={identifier}
             onChange={(e) => setId(e.target.value)}
             placeholder="you@email.com or 98xxxxxxxx"
             autoComplete="username"
           />
-        </Field>
-        <Field label="Password">
+        </AuthField>
+        <AuthField label="Password" icon={Lock}>
           <Input
             type="password"
             value={password}
             onChange={(e) => setPw(e.target.value)}
-            placeholder="••••••••"
+            placeholder="Enter your password"
             autoComplete="current-password"
           />
-        </Field>
-        <div className="text-right text-sm">
-          <Link to="/forgot-password" className="text-accent hover:underline">
+        </AuthField>
+        <div className="flex items-center justify-between gap-3 -mt-1">
+          <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Shield className="h-3.5 w-3.5 text-success shrink-0" />
+            Secure sign-in
+          </p>
+          <Link
+            to="/forgot-password"
+            className="text-sm font-medium text-accent hover:text-accent/90 underline-offset-4 hover:underline shrink-0"
+          >
             Forgot password?
           </Link>
         </div>
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full h-11 gradient-primary border-0 hover-glow"
-        >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Login"}
-        </Button>
+        <AuthSubmitButton loading={loading}>Sign in</AuthSubmitButton>
       </form>
     </AuthShell>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs text-secondary uppercase tracking-wide">{label}</Label>
-      <div className="rounded-xl bg-surface border border-border ring-focus">{children}</div>
-    </div>
   );
 }

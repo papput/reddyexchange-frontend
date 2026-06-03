@@ -162,8 +162,8 @@ function BuyFlow() {
   const [step, setStep] = useState(1);
   const [inr, setInr] = useState<number>(FALLBACK_MIN_INR);
   const [walletAddress, setWalletAddress] = useState("");
-  const [network, setNetwork] = useState<Network>("TRC20");
-  const [buyAsset, setBuyAsset] = useState<BuyAsset>("pex");
+  const [network, setNetwork] = useState<Network>("BEP20");
+  const [buyAsset, setBuyAsset] = useState<BuyAsset>("standard");
   const [payMethod, setPayMethod] = useState<PayMethod>("upi");
   const [utr, setUtr] = useState("");
   const [proofFile, setProofFile] = useState<File | null>(null);
@@ -284,10 +284,6 @@ function BuyFlow() {
       const url = data.data?.redirectUrl;
       const oid = data.data?.orderId;
       if (!url || !oid) throw new Error("Invalid payment response");
-      const warnings = data.data?.warnings;
-      if (warnings?.length) {
-        warnings.forEach((w) => toast.info(w, { duration: 8000 }));
-      }
       writeBuyAutoSession({ orderId: oid, awaitingReturn: true });
       window.location.assign(url);
     } catch (e) {
@@ -369,8 +365,8 @@ function BuyFlow() {
     setStep(1);
     setInr(minInr);
     setWalletAddress("");
-    setBuyAsset("pex");
-    setNetwork("TRC20");
+    setBuyAsset("standard");
+    setNetwork("BEP20");
     setPayMethod("upi");
     setUtr("");
     setProofFile(null);
