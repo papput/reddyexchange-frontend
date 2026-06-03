@@ -65,10 +65,10 @@ function Hero({ rate, whatsappUrl }: { rate: number; whatsappUrl: string }) {
         <div className="absolute inset-0 grid-bg opacity-40" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full blur-3xl opacity-30 gradient-primary" />
       </div>
-      <div className="container mx-auto px-4 pt-6 sm:pt-12 md:pt-24 pb-12">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6 animate-fade-up">
-            <HeroBrandWordmark />
+      <div className="container mx-auto px-4 pt-3 sm:pt-12 md:pt-24 pb-8 sm:pb-12">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-start lg:items-center">
+          <div className="order-2 lg:order-1 space-y-4 sm:space-y-6 animate-fade-up">
+            <HeroBrandWordmark className="hidden lg:flex" />
             <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass text-sm font-semibold animate-sell-price-glow">
               <Sparkles className="h-4 w-4 text-accent" />
               <span className="text-secondary">Live rate today</span>
@@ -76,18 +76,18 @@ function Hero({ rate, whatsappUrl }: { rate: number; whatsappUrl: string }) {
                 <InrPerUsdtRate inr={rate} size="xs" />
               </span>
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
+            <h1 className="hidden md:block text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
               Buy{" "}
               <span className="gradient-text inline-flex items-center gap-1.5">
                 <UsdtWord size="lg" className="font-bold" />
               </span>{" "}
               Instantly in India
             </h1>
-            <p className="text-lg text-secondary max-w-xl">
+            <p className="hidden md:block text-lg text-secondary max-w-xl">
               Fast · Secure · Trusted. The premium gateway for digital assets — built for speed,
               designed for trust.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="hidden md:flex flex-wrap gap-3">
               <Button
                 asChild
                 size="lg"
@@ -106,7 +106,7 @@ function Hero({ rate, whatsappUrl }: { rate: number; whatsappUrl: string }) {
                 <Link to="/login">I have an account</Link>
               </Button>
             </div>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-xs text-muted-foreground">
+            <div className="hidden md:flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Shield className="h-4 w-4 text-success" /> Bank-grade security
               </span>
@@ -129,7 +129,9 @@ function Hero({ rate, whatsappUrl }: { rate: number; whatsappUrl: string }) {
               ) : null}
             </div>
           </div>
-          <LandingBuyStepCard rate={rate} />
+          <div className="order-1 lg:order-2 w-full">
+            <LandingBuyStepCard rate={rate} />
+          </div>
         </div>
       </div>
     </section>

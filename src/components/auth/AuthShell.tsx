@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { BadgeCheck, Shield, Sparkles, TrendingUp, Zap } from "lucide-react";
-import { BrandMark, Logo, HeroBrandWordmark } from "@/components/brand/Logo";
+import { Logo, HeroBrandWordmark } from "@/components/brand/Logo";
 import { InrPerUsdtRate } from "@/components/app/UsdtMark";
 import { usePublicSettings } from "@/hooks/use-public-settings";
 import { buildWhatsAppUrl, defaultWhatsAppMessage, mailtoSupport } from "@/lib/contact-links";
@@ -102,7 +102,7 @@ export function AuthShell({
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 py-8 sm:py-10 lg:py-14">
+      <main className="flex-1 container mx-auto px-4 py-3 sm:py-10 lg:py-14">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.05fr,minmax(0,440px)] gap-12 lg:gap-20 items-center">
           <aside className="hidden lg:flex flex-col gap-10 animate-fade-up">
             <div className="relative">
@@ -144,31 +144,15 @@ export function AuthShell({
           </aside>
 
           <div className="w-full max-w-[440px] mx-auto lg:max-w-none lg:mx-0 animate-fade-up [animation-delay:80ms]">
-            <div className="lg:hidden flex flex-col items-center gap-4 mb-8">
-              <div className="relative">
-                <div
-                  className="absolute inset-0 rounded-2xl gradient-primary opacity-35 blur-xl"
-                  aria-hidden
-                />
-                <BrandMark className="relative h-14 w-14" />
-              </div>
-              <HeroBrandWordmark />
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs font-medium animate-sell-price-glow">
-                <Sparkles className="h-3.5 w-3.5 text-accent" />
-                <span className="text-secondary">Live</span>
-                <InrPerUsdtRate inr={rate} size="2xs" />
-              </div>
-            </div>
-
-            <div className="mb-7 sm:mb-8 text-center lg:text-left">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-semibold uppercase tracking-wider text-accent mb-4">
+            <div className="mb-4 sm:mb-7 lg:mb-8 text-center lg:text-left">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-semibold uppercase tracking-wider text-accent mb-2 sm:mb-4">
                 <Sparkles className="h-3 w-3" />
                 {variant === "register" ? "Free signup" : variant === "login" ? "Member access" : site.siteName}
               </div>
-              <h1 className="text-3xl sm:text-[2rem] font-bold tracking-tight text-foreground leading-tight">
+              <h1 className="text-2xl sm:text-[2rem] font-bold tracking-tight text-foreground leading-tight">
                 {titleNode}
               </h1>
-              <p className="text-secondary text-sm sm:text-[15px] mt-3 leading-relaxed max-w-md mx-auto lg:mx-0">
+              <p className="hidden sm:block text-secondary text-sm sm:text-[15px] mt-3 leading-relaxed max-w-md mx-auto lg:mx-0">
                 {subtitle}
               </p>
             </div>
