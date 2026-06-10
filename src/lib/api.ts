@@ -344,6 +344,9 @@ export async function apiGetAutoUpiDraft(orderId: string) {
       silkpayPayment: boolean;
       webhookUtr: string;
       amountINR: number;
+      usdtAmount?: number;
+      network?: string;
+      buyAsset?: string;
     };
   }>(`/buy/upi/auto/draft?${q}`);
 }

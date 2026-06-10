@@ -43,7 +43,13 @@ const STEP_LABELS = ["Payment & asset", "Amount", "Pay", "Proof", "Done"];
 const TOTAL_STEPS = 5;
 const BUY_AUTO_SESSION_KEY = "neon_buy_auto_order_v1";
 
-type BuyAutoSession = { orderId: string; awaitingReturn?: boolean };
+type BuyAutoSession = {
+  orderId: string;
+  awaitingReturn?: boolean;
+  network?: Network;
+  buyAsset?: BuyAsset;
+  inr?: number;
+};
 
 function readBuyAutoSession(): BuyAutoSession | null {
   try {
@@ -51,10 +57,29 @@ function readBuyAutoSession(): BuyAutoSession | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as BuyAutoSession;
     if (!parsed?.orderId) return null;
-    return { orderId: String(parsed.orderId), awaitingReturn: Boolean(parsed.awaitingReturn) };
+    return {
+      orderId: String(parsed.orderId),
+      awaitingReturn: Boolean(parsed.awaitingReturn),
+      network: parsed.network,
+      buyAsset: parsed.buyAsset,
+      inr: typeof parsed.inr === "number" ? parsed.inr : undefined,
+    };
   } catch {
     return null;
   }
+}
+
+function applyBuyDraftToState(
+  draft: { network?: string; buyAsset?: string; amountINR?: number },
+  setNetwork: (n: Network) => void,
+  setBuyAsset: (a: BuyAsset) => void,
+  setInr: (n: number) => void,
+) {
+  const net = String(draft.network || "").trim();
+  if (net === "TRC20" || net === "ERC20" || net === "BEP20") setNetwork(net);
+  const asset = String(draft.buyAsset || "").trim();
+  if (asset === "pex" || asset === "standard") setBuyAsset(asset);
+  if (typeof draft.amountINR === "number" && draft.amountINR > 0) setInr(draft.amountINR);
 }
 
 function writeBuyAutoSession(data: BuyAutoSession) {
@@ -192,6 +217,8 @@ function BuyFlow() {
       </span>
     );
 
+  const displayNetwork: Network = buyAsset === "pex" ? "TRC20" : network;
+
   const displayUsdtField =
     amountLead === "inr" ? fmtUsdtAmount(usdt) : usdtInput;
 
@@ -244,7 +271,14 @@ function BuyFlow() {
     if ((fromGateway || sessionMatches || fromCowpayReturn) && oid) {
       setAutoPayOrderId(String(oid));
       setStep(4);
-      writeBuyAutoSession({ orderId: String(oid), awaitingReturn: false });
+      applyBuyDraftToState(session ?? {}, setNetwork, setBuyAsset, setInr);
+      writeBuyAutoSession({
+        orderId: String(oid),
+        awaitingReturn: false,
+        network: session?.network,
+        buyAsset: session?.buyAsset,
+        inr: session?.inr,
+      });
     }
 
     const stripQs = resume || successFlag || hasOrderInQs;
@@ -257,7 +291,9 @@ function BuyFlow() {
     if (!autoPayOrderId || !auth?.token) return;
     void apiGetAutoUpiDraft(autoPayOrderId)
       .then(({ data }) => {
-        const webhookUtr = String(data.data?.webhookUtr || "").trim();
+        const draft = data.data;
+        applyBuyDraftToState(draft ?? {}, setNetwork, setBuyAsset, setInr);
+        const webhookUtr = String(draft?.webhookUtr || "").trim();
         if (webhookUtr.length >= 6) setUtr((prev) => (prev.trim() ? prev : webhookUtr));
       })
       .catch(() => {});
@@ -288,6 +324,13 @@ function BuyFlow() {
       if (data.data?.payMode === "manual") {
         setAutoPayOrderId(String(oid));
         setManualFallbackPay(true);
+        writeBuyAutoSession({
+          orderId: String(oid),
+          awaitingReturn: false,
+          network,
+          buyAsset,
+          inr: inrRoundedForGateway,
+        });
         setGatewayLoading(false);
         return;
       }
@@ -295,7 +338,13 @@ function BuyFlow() {
       const url = data.data?.redirectUrl;
       if (!url) throw new Error("Invalid payment response");
       setManualFallbackPay(false);
-      writeBuyAutoSession({ orderId: oid, awaitingReturn: true });
+      writeBuyAutoSession({
+        orderId: oid,
+        awaitingReturn: true,
+        network,
+        buyAsset,
+        inr: inrRoundedForGateway,
+      });
       window.location.assign(url);
     } catch (e) {
       toast.error(getApiErrorMessage(e));
@@ -346,7 +395,18 @@ function BuyFlow() {
         fd.append("utrNumber", utr.trim());
         fd.append("screenshot", proofFile);
         const { data } = await apiConfirmAutoUpi(fd);
-        const id = String(data.data?.orderId || data.data?._id || "");
+        const tx = data.data;
+        const id = String(tx?.orderId || tx?._id || "");
+        applyBuyDraftToState(
+          {
+            network: typeof tx?.network === "string" ? tx.network : undefined,
+            buyAsset: typeof tx?.buyAsset === "string" ? tx.buyAsset : undefined,
+            amountINR: typeof tx?.amountINR === "number" ? tx.amountINR : undefined,
+          },
+          setNetwork,
+          setBuyAsset,
+          setInr,
+        );
         setOrderId(id);
         setAutoPayOrderId(null);
         sessionStorage.removeItem(BUY_AUTO_SESSION_KEY);
@@ -360,7 +420,18 @@ function BuyFlow() {
         fd.append("buyAsset", buyAsset);
         fd.append("screenshot", proofFile);
         const { data } = await apiCreateBuy(fd);
-        const id = String(data.data?.orderId || data.data?._id || "");
+        const tx = data.data;
+        const id = String(tx?.orderId || tx?._id || "");
+        applyBuyDraftToState(
+          {
+            network: typeof tx?.network === "string" ? tx.network : network,
+            buyAsset: typeof tx?.buyAsset === "string" ? tx.buyAsset : buyAsset,
+            amountINR: typeof tx?.amountINR === "number" ? tx.amountINR : inr,
+          },
+          setNetwork,
+          setBuyAsset,
+          setInr,
+        );
         setOrderId(id);
       }
       await qc.invalidateQueries({ queryKey: ["user-transactions"] });
@@ -496,7 +567,7 @@ function BuyFlow() {
         )}
 
         {step === 5 && (
-          <StepStatus orderId={orderId} inr={inr} usdt={usdt} network={network} receiveLabel={receiveLabel} />
+          <StepStatus orderId={orderId} inr={inr} usdt={usdt} network={displayNetwork} receiveLabel={receiveLabel} />
         )}
 
         {showMainNav && step !== 1 && (
