@@ -373,11 +373,15 @@ function BuyFlow() {
 
   const back = () => {
     if (step === 4 && autoPayOrderId) {
+      setUtr("");
+      setProofFile(null);
+      if (manualFallbackPay) {
+        setStep(3);
+        return;
+      }
       setAutoPayOrderId(null);
       setManualFallbackPay(false);
       sessionStorage.removeItem(BUY_AUTO_SESSION_KEY);
-      setUtr("");
-      setProofFile(null);
       setStep(3);
       return;
     }
@@ -470,7 +474,12 @@ function BuyFlow() {
   }
 
   const showMainNav = step < 5;
-  const step3NeedsPayOnly = step === 3 && isAutoUpi && payMethod === "upi" && !autoPayOrderId && !manualFallbackPay;
+  /** Auto gateway: only the in-card “Pay with UPI” button — no bottom Continue yet. */
+  const isAutoUpiGatewayOnlyStep =
+    step === 3 && payMethod === "upi" && isAutoUpi && !manualFallbackPay && !autoPayOrderId;
+  /** Returning from Cowpay/SilkPay — brief loader then auto-advance to proof step. */
+  const isGatewayReturnLoading = step === 3 && Boolean(autoPayOrderId) && !manualFallbackPay;
+  const showStep3Continue = step === 3 && !isAutoUpiGatewayOnlyStep && !isGatewayReturnLoading;
 
   return (
     <div>
@@ -582,9 +591,9 @@ function BuyFlow() {
                 Continue <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             )}
-            {step === 3 && !autoPayOrderId && !step3NeedsPayOnly && (
+            {showStep3Continue && (
               <Button type="button" onClick={goToProofStep} className="flex-1 gradient-primary border-0 hover-glow h-11">
-                I&apos;ve paid — enter UTR <ArrowRight className="h-4 w-4 ml-1" />
+                Continue <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             )}
             {step === 4 && (
@@ -973,6 +982,9 @@ function PaymentInstructions({
             <Row label="Payee" value={upiPayeeName || accName} />
           </div>
         </div>
+        <p className="text-xs text-muted-foreground text-center pt-1">
+          After you pay, tap <strong className="text-foreground">Continue</strong> below to enter your UTR / reference and upload payment screenshot.
+        </p>
       </div>
     );
   }
