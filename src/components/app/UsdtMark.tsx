@@ -70,6 +70,18 @@ export function FormattedUsdt({
   );
 }
 
+/** Compact fee chip for dropdowns: “fee - 0.5” + Tether mark. */
+export function FeeCompact({ fee }: { fee: number }) {
+  const n = Number(fee.toFixed(4));
+  const s = n % 1 === 0 ? String(n) : String(n).replace(/\.?0+$/, "");
+  return (
+    <span className="inline-flex items-center gap-1 tabular-nums whitespace-nowrap">
+      <span>fee - {s}</span>
+      <UsdtMark size="xs" />
+    </span>
+  );
+}
+
 /** Network option fee line: USDT amount + Tether mark + “USDT exchange fee”. */
 export function FeeUsdtLabel({ fee }: { fee: number }) {
   if (fee === 0) {

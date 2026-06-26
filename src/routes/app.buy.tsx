@@ -495,8 +495,8 @@ function BuyFlow() {
 
       <div
         className={cn(
-          "animate-fade-up rounded-2xl",
-          step === 1 ? "p-0 bg-transparent border-0 shadow-none" : "glass-strong p-5 sm:p-6"
+          "animate-fade-up rounded-2xl min-w-0 max-w-full card-shell",
+          step === 1 ? "p-0 bg-transparent border-0 shadow-none" : "glass-strong p-5 sm:p-6 pb-6",
         )}
       >
         {step === 1 && (
@@ -580,7 +580,7 @@ function BuyFlow() {
         )}
 
         {showMainNav && step !== 1 && (
-          <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row cta-shadow-zone">
             {step > 1 && (
               <Button type="button" variant="outline" onClick={back} className="glass border-border/60 sm:flex-1 h-11">
                 <ArrowLeft className="h-4 w-4 mr-1" /> Back
@@ -605,7 +605,7 @@ function BuyFlow() {
         )}
 
         {step === 5 && (
-          <div className="mt-6 flex gap-2">
+          <div className="mt-6 flex gap-2 cta-shadow-zone">
             <Button type="button" variant="outline" onClick={() => nav({ to: "/app" })} className="flex-1 glass border-border/60 h-11">
               Go home
             </Button>
@@ -942,19 +942,20 @@ function PaymentInstructions({
 
   if (payMethod === "upi" && isAutoUpi && !manualFallbackPay) {
     return (
-      <div className="rounded-2xl bg-surface p-5 border border-border space-y-4">
+      <div className="rounded-2xl bg-surface p-5 pb-6 border border-border space-y-4 card-shell">
         <p className="text-sm text-secondary">
           Pay online with UPI. Amount: <strong>{fmtINR(inrRoundedForGateway)}</strong>
           {Math.abs(inrRoundedForGateway - inr) > 0.01 && (
             <span className="block text-xs text-muted-foreground mt-1">Amount rounded to whole rupees for this payment.</span>
           )}
         </p>
-        <Button
-          type="button"
-          disabled={gatewayLoading || inrRoundedForGateway < minInr}
-          onClick={onStartAutoUpi}
-          className="w-full h-12 gradient-primary border-0 hover-glow gap-2"
-        >
+        <div className="cta-shadow-zone">
+          <Button
+            type="button"
+            disabled={gatewayLoading || inrRoundedForGateway < minInr}
+            onClick={onStartAutoUpi}
+            className="w-full h-12 gradient-primary border-0 hover-glow gap-2"
+          >
           {gatewayLoading ? (
             <>
               <Loader2 className="h-5 w-5 animate-spin" /> Opening secure UPI…
@@ -965,6 +966,7 @@ function PaymentInstructions({
             </>
           )}
         </Button>
+        </div>
       </div>
     );
   }
@@ -1030,7 +1032,7 @@ function PaymentInstructions({
             {bankImpsWhatsappBody}
           </pre>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 cta-shadow-zone">
           {whatsappHref ? (
             <Button
               type="button"

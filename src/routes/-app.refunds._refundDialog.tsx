@@ -97,7 +97,7 @@ export function RefundDialog({ buyId, onDone }: { buyId: string; onDone: () => v
             </p>
           )}
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2 justify-end cta-shadow-zone">
             <Button
               type="button"
               variant="outline"

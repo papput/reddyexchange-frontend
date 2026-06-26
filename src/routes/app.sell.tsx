@@ -175,7 +175,7 @@ function SellFlow() {
       <SellPriceGlow sellRate={sellRate} />
       <StepIndicator step={step} total={TOTAL_STEPS} labels={LABELS} />
 
-      <div className="glass-strong rounded-2xl p-5 sm:p-6 animate-fade-up">
+      <div className="glass-strong rounded-2xl p-5 sm:p-6 pb-6 animate-fade-up card-shell">
         {step === 1 && <StepAmount usdt={usdt} setUsdt={setUsdt} inr={inr} minUsdt={MIN_SELL_USDT} />}
         {step === 2 && <StepSend usdt={usdt} network={network} setNetwork={setNetwork} address={depositAddress} />}
         {step === 3 && (
@@ -207,7 +207,7 @@ function SellFlow() {
         {step === 5 && <StepStatus sellId={sellId} inr={inr} usdt={usdt} payMethod={payMethod} />}
 
         {step < 5 && (
-          <div className="mt-6 flex gap-2">
+          <div className="mt-6 flex gap-2 cta-shadow-zone">
             {step > 1 && (
               <Button variant="outline" onClick={back} className="glass border-border/60">
                 <ArrowLeft className="h-4 w-4 mr-1" /> Back
@@ -239,7 +239,7 @@ function SellFlow() {
         )}
 
         {step === 5 && (
-          <div className="mt-6 flex gap-2">
+          <div className="mt-6 flex gap-2 cta-shadow-zone">
             <Button variant="outline" onClick={() => nav({ to: "/app" })} className="flex-1 glass border-border/60 h-11">
               Go home
             </Button>

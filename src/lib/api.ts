@@ -195,6 +195,55 @@ export async function fetchPublicSettings(): Promise<PublicSettingsData> {
   return data.data;
 }
 
+export type LiveFeedEntry = {
+  id: string;
+  globalIndex: number;
+  name: string;
+  inr: number;
+  usdt: number;
+  status: "Pending" | "Completed" | "Processing";
+  appearedAt: number;
+  secsAgo: number;
+};
+
+export type LiveFeedData = {
+  serverTime: number;
+  epochStart: number;
+  poolSize: number;
+  pendingCount: number;
+  latestGlobalIndex: number;
+  entries: LiveFeedEntry[];
+};
+
+export async function fetchLiveFeed(): Promise<LiveFeedData> {
+  const { data } = await api.get<{ success: boolean; data: LiveFeedData }>("/live-feed");
+  return data.data;
+}
+
+export type ReviewItem = {
+  id: string;
+  authorName: string;
+  city?: string;
+  rating: number;
+  text: string;
+  publishedAt: string;
+};
+
+export type ReviewsPagination = {
+  page: number;
+  limit: number;
+  total: number;
+};
+
+export async function fetchReviews(page = 1, limit = 15) {
+  const { data } = await api.get<{
+    success: boolean;
+    data: ReviewItem[];
+    pagination: ReviewsPagination;
+  }>("/reviews", { params: { page, limit } });
+  return { reviews: data.data, pagination: data.pagination };
+}
+
 export type ApiUser = {
   _id: string;
   fullName: string;

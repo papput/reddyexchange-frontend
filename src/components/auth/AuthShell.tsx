@@ -57,7 +57,7 @@ export function AuthShell({
     );
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden">
+    <div className="min-h-screen flex flex-col relative isolate">
       <div className="absolute inset-0 -z-10 pointer-events-none">
         <div className="absolute inset-0 grid-bg opacity-40" />
         <div className="absolute top-[8%] right-[-10%] w-[min(800px,95vw)] h-[min(560px,75vh)] rounded-full blur-[100px] opacity-30 gradient-primary animate-float" />
@@ -162,11 +162,18 @@ export function AuthShell({
                 className="absolute -inset-[1px] rounded-[1.35rem] sm:rounded-[1.65rem] opacity-80 pointer-events-none"
                 style={{
                   background:
-                    "linear-gradient(135deg, color-mix(in oklab, #6C4CFF 50%, transparent), color-mix(in oklab, #00D4FF 35%, transparent), color-mix(in oklab, #6C4CFF 25%, transparent))",
+                    "linear-gradient(135deg, color-mix(in oklab, var(--brand-violet) 48%, transparent), color-mix(in oklab, var(--brand-blue) 34%, transparent), color-mix(in oklab, var(--brand-pink) 10%, transparent))",
                 }}
                 aria-hidden
               />
-              <div className="relative glass-strong rounded-[1.3rem] sm:rounded-[1.6rem] p-6 sm:p-8 border border-white/[0.08] shadow-[var(--shadow-card)]">
+              <div
+                className={cn(
+                  "relative glass-strong rounded-[1.3rem] sm:rounded-[1.6rem] border border-white/[0.08] shadow-[var(--shadow-card)]",
+                  variant === "login"
+                    ? "p-7 sm:p-9 pb-8 sm:pb-10"
+                    : "p-6 sm:p-8 pb-7 sm:pb-9",
+                )}
+              >
                 {children}
               </div>
             </div>

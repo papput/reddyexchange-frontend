@@ -18,7 +18,7 @@ export default defineConfig({
   plugins: [nitro()],
   vite: {
     server: {
-      host: "127.0.0.1",
+      host: true,
       port: 5015,
       strictPort: true,
       proxy: {

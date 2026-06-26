@@ -25,7 +25,7 @@ function AppHome() {
 
   return (
     <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-7 gradient-primary shadow-[var(--shadow-elegant)]">
+      <div className="relative overflow-visible rounded-3xl p-6 sm:p-7 gradient-primary shadow-[var(--shadow-elegant)]">
         <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
         <div className="absolute -left-10 -bottom-16 h-48 w-48 rounded-full bg-accent/30 blur-2xl" />
         <div className="relative">

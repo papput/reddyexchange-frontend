@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as ReviewsRouteImport } from './routes/reviews'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as RefundRouteImport } from './routes/refund'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -34,6 +35,11 @@ import { Route as AppRefundsIdRouteImport } from './routes/app.refunds.$id'
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewsRoute = ReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
   '/register': typeof RegisterRoute
+  '/reviews': typeof ReviewsRoute
   '/terms': typeof TermsRoute
   '/app/buy': typeof AppBuyRoute
   '/app/more': typeof AppMoreRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
   '/register': typeof RegisterRoute
+  '/reviews': typeof ReviewsRoute
   '/terms': typeof TermsRoute
   '/app/buy': typeof AppBuyRoute
   '/app/more': typeof AppMoreRoute
@@ -194,6 +202,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
   '/register': typeof RegisterRoute
+  '/reviews': typeof ReviewsRoute
   '/terms': typeof TermsRoute
   '/app/buy': typeof AppBuyRoute
   '/app/more': typeof AppMoreRoute
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/refund'
     | '/register'
+    | '/reviews'
     | '/terms'
     | '/app/buy'
     | '/app/more'
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/refund'
     | '/register'
+    | '/reviews'
     | '/terms'
     | '/app/buy'
     | '/app/more'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/refund'
     | '/register'
+    | '/reviews'
     | '/terms'
     | '/app/buy'
     | '/app/more'
@@ -288,6 +300,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RefundRoute: typeof RefundRoute
   RegisterRoute: typeof RegisterRoute
+  ReviewsRoute: typeof ReviewsRoute
   TermsRoute: typeof TermsRoute
 }
 
@@ -298,6 +311,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reviews': {
+      id: '/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof ReviewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -492,6 +512,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RefundRoute: RefundRoute,
   RegisterRoute: RegisterRoute,
+  ReviewsRoute: ReviewsRoute,
   TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport

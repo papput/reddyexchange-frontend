@@ -78,8 +78,8 @@ function LoginPage() {
         </>
       }
     >
-      <form onSubmit={submit} className="space-y-5">
-        <AuthField label="Email or mobile" icon={UserRound}>
+      <form onSubmit={submit} className="space-y-6">
+        <AuthField label="Email or mobile" icon={UserRound} size="lg">
           <Input
             value={identifier}
             onChange={(e) => setId(e.target.value)}
@@ -87,7 +87,7 @@ function LoginPage() {
             autoComplete="username"
           />
         </AuthField>
-        <AuthField label="Password" icon={Lock}>
+        <AuthField label="Password" icon={Lock} size="lg">
           <Input
             type="password"
             value={password}
@@ -96,19 +96,21 @@ function LoginPage() {
             autoComplete="current-password"
           />
         </AuthField>
-        <div className="flex items-center justify-between gap-3 -mt-1">
-          <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <Shield className="h-3.5 w-3.5 text-success shrink-0" />
+        <div className="flex items-center justify-between gap-3 pt-0.5">
+          <p className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
+            <Shield className="h-4 w-4 text-success shrink-0" />
             Secure sign-in
           </p>
           <Link
             to="/forgot-password"
-            className="text-sm font-medium text-accent hover:text-accent/90 underline-offset-4 hover:underline shrink-0"
+            className="text-sm sm:text-base font-medium text-accent hover:text-accent/90 underline-offset-4 hover:underline shrink-0"
           >
             Forgot password?
           </Link>
         </div>
-        <AuthSubmitButton loading={loading}>Sign in</AuthSubmitButton>
+        <AuthSubmitButton loading={loading} className="h-[3.25rem] sm:h-14 text-base sm:text-lg">
+          Sign in
+        </AuthSubmitButton>
       </form>
     </AuthShell>
   );

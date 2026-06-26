@@ -155,14 +155,16 @@ export function PasswordResetOtpFlow({
               .
             </p>
           )}
-          <Button
-            type="button"
-            disabled={loading || !effectiveRequestId}
-            onClick={sendOtp}
-            className="w-full h-11 gradient-primary border-0 hover-glow"
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send OTP"}
-          </Button>
+          <div className="cta-shadow-zone">
+            <Button
+              type="button"
+              disabled={loading || !effectiveRequestId}
+              onClick={sendOtp}
+              className="w-full h-11 gradient-primary border-0 hover-glow"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send OTP"}
+            </Button>
+          </div>
         </>
       ) : (
         <>
@@ -212,14 +214,16 @@ export function PasswordResetOtpFlow({
               />
             </div>
           </div>
-          <Button
-            type="button"
-            disabled={loading}
-            onClick={submitReset}
-            className="w-full h-11 gradient-primary border-0 hover-glow"
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : submitLabel}
-          </Button>
+          <div className="cta-shadow-zone">
+            <Button
+              type="button"
+              disabled={loading}
+              onClick={submitReset}
+              className="w-full h-11 gradient-primary border-0 hover-glow"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : submitLabel}
+            </Button>
+          </div>
           <div className="flex flex-wrap gap-2 justify-between items-center text-sm">
             <button
               type="button"

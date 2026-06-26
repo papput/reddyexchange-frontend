@@ -41,9 +41,9 @@ export function HeroBrandWordmark({ className }: { className?: string }) {
 
 export function Logo({ to = "/", className = "" }: { to?: string; className?: string }) {
   return (
-    <Link to={to} className={cn("flex items-center gap-2 group", className)}>
-      <BrandMark className="h-8 w-8 group-hover:opacity-90 transition-opacity" />
-      <SiteNameText className="font-semibold tracking-tight text-lg" />
+    <Link to={to} className={cn("flex items-center gap-2.5 group", className)}>
+      <BrandMark className="h-9 w-9 sm:h-10 sm:w-10 group-hover:opacity-90 transition-opacity" />
+      <SiteNameText className="font-semibold tracking-tight text-xl sm:text-[1.35rem]" />
     </Link>
   );
 }
