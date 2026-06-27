@@ -1,16 +1,25 @@
-import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { BottomNav, SideNav } from "@/components/app/AppNav";
 import { Logo } from "@/components/brand/Logo";
-import { useAuth, useHydrated, logout, refreshProfile } from "@/lib/store";
+import { useAuth, useHydrated, logout, refreshProfile, getAuth } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
 import { usePublicSettings } from "@/hooks/use-public-settings";
 import { buildWhatsAppUrl, defaultWhatsAppMessage } from "@/lib/contact-links";
+import { captureGatewayReturnIfPresent } from "@/lib/buyGateway";
+import { SESSION_EXPIRED_FLASH_KEY } from "@/lib/constants";
 import whatsappIcon from "@/assets/whatsapp.svg";
 
 export const Route = createFileRoute("/app")({
+  beforeLoad: ({ location }) => {
+    if (typeof window === "undefined") return;
+    captureGatewayReturnIfPresent(location.pathname, location.search);
+    const auth = getAuth();
+    if (!auth) {
+      throw redirect({ to: "/login", replace: true });
+    }
+  },
   component: AppLayout,
 });
 
@@ -35,6 +44,29 @@ function AppLayout() {
     redirected.current = true;
     nav({ to: "/login", replace: true });
   }, [hydrated, auth, nav]);
+
+  /** Re-check JWT expiry while the app is open (tab focus + interval). */
+  useEffect(() => {
+    if (!hydrated) return;
+    const checkSession = () => {
+      const hadAuth = Boolean(auth?.token);
+      const valid = getAuth();
+      if (hadAuth && !valid) {
+        try {
+          sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
+        } catch {
+          /* ignore */
+        }
+        nav({ to: "/login", replace: true });
+      }
+    };
+    const id = window.setInterval(checkSession, 30_000);
+    window.addEventListener("focus", checkSession);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", checkSession);
+    };
+  }, [hydrated, auth?.token, nav]);
 
   if (!hydrated || !auth) {
     return null;

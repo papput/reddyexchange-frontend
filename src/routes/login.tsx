@@ -8,6 +8,7 @@ import { AuthSubmitButton } from "@/components/auth/AuthSubmitButton";
 import { Input } from "@/components/ui/input";
 import { apiLogin, getApiErrorMessage } from "@/lib/api";
 import { SESSION_EXPIRED_FLASH_KEY } from "@/lib/constants";
+import { hasPendingBuyResume } from "@/lib/buyGateway";
 import { normalizeApiUser, setAuth } from "@/lib/store";
 import { Lock, Shield, UserRound } from "lucide-react";
 import { site } from "@/config/site";
@@ -38,7 +39,7 @@ function LoginPage() {
       if (sessionStorage.getItem(SESSION_EXPIRED_FLASH_KEY) !== "1") return;
       sessionStorage.removeItem(SESSION_EXPIRED_FLASH_KEY);
       toast.info("You've been signed out", {
-        description: "Your session expired. Please sign in again to continue.",
+        description: "Logged out due to token expiry. Please sign in again to continue.",
         duration: 6500,
       });
     } catch {
@@ -59,7 +60,7 @@ function LoginPage() {
       if (!data?.token || !data?.data?.user) throw new Error("Invalid server response");
       setAuth(data.token, normalizeApiUser(data.data.user));
       toast.success("Welcome back");
-      nav({ to: "/app" });
+      nav({ to: hasPendingBuyResume() ? "/app/buy" : "/app" });
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err));
     } finally {

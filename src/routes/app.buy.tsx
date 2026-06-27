@@ -32,6 +32,13 @@ import { IconBsc, IconEth, IconPex, IconTron } from "@/components/app/NetworkTok
 import { ProofUploadPreview } from "@/components/app/ProofUploadPreview";
 import { FormattedUsdt, InrPerUsdtRate, UsdtMark, UsdtWord } from "@/components/app/UsdtMark";
 import { cn } from "@/lib/utils";
+import {
+  BUY_AUTO_SESSION_KEY,
+  getInitialBuyGatewayState,
+  readBuyAutoSession,
+  stripGatewayQueryFromUrl,
+  writeBuyAutoSession,
+} from "@/lib/buyGateway";
 
 export const Route = createFileRoute("/app/buy")({
   head: () => ({ meta: [{ title: `Buy — ${site.siteName}` }] }),
@@ -41,33 +48,6 @@ export const Route = createFileRoute("/app/buy")({
 const FALLBACK_MIN_INR = 2000;
 const STEP_LABELS = ["Payment & asset", "Amount", "Pay", "Proof", "Done"];
 const TOTAL_STEPS = 5;
-const BUY_AUTO_SESSION_KEY = "neon_buy_auto_order_v1";
-
-type BuyAutoSession = {
-  orderId: string;
-  awaitingReturn?: boolean;
-  network?: Network;
-  buyAsset?: BuyAsset;
-  inr?: number;
-};
-
-function readBuyAutoSession(): BuyAutoSession | null {
-  try {
-    const raw = sessionStorage.getItem(BUY_AUTO_SESSION_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as BuyAutoSession;
-    if (!parsed?.orderId) return null;
-    return {
-      orderId: String(parsed.orderId),
-      awaitingReturn: Boolean(parsed.awaitingReturn),
-      network: parsed.network,
-      buyAsset: parsed.buyAsset,
-      inr: typeof parsed.inr === "number" ? parsed.inr : undefined,
-    };
-  } catch {
-    return null;
-  }
-}
 
 function applyBuyDraftToState(
   draft: { network?: string; buyAsset?: string; amountINR?: number },
@@ -80,10 +60,6 @@ function applyBuyDraftToState(
   const asset = String(draft.buyAsset || "").trim();
   if (asset === "pex" || asset === "standard") setBuyAsset(asset);
   if (typeof draft.amountINR === "number" && draft.amountINR > 0) setInr(draft.amountINR);
-}
-
-function writeBuyAutoSession(data: BuyAutoSession) {
-  sessionStorage.setItem(BUY_AUTO_SESSION_KEY, JSON.stringify(data));
 }
 
 function fmtUsdtAmount(n: number) {
@@ -184,7 +160,8 @@ function BuyFlow() {
   const upiMode = settings?.upiMode ?? "manual";
   const isAutoUpi = upiMode === "auto";
 
-  const [step, setStep] = useState(1);
+  const initialGateway = getInitialBuyGatewayState();
+  const [step, setStep] = useState(initialGateway.step);
   const [inr, setInr] = useState<number>(FALLBACK_MIN_INR);
   const [walletAddress, setWalletAddress] = useState("");
   const [network, setNetwork] = useState<Network>("BEP20");
@@ -194,7 +171,7 @@ function BuyFlow() {
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("");
-  const [autoPayOrderId, setAutoPayOrderId] = useState<string | null>(null);
+  const [autoPayOrderId, setAutoPayOrderId] = useState<string | null>(initialGateway.autoPayOrderId);
   const [manualFallbackPay, setManualFallbackPay] = useState(false);
   const [gatewayLoading, setGatewayLoading] = useState(false);
   /** Which field user last edited for INR ↔ USDT sync */
@@ -238,53 +215,21 @@ function BuyFlow() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const qs = new URLSearchParams(window.location.search);
-    const resume = qs.get("resume") === "auto";
-    const successFlag =
-      qs.get("success") === "true" ||
-      qs.get("success") === "1" ||
-      qs.get("payment_status") === "success" ||
-      qs.get("status") === "success";
-
-    let oid =
-      qs.get("orderId") ||
-      qs.get("order_id") ||
-      qs.get("mOrderId") ||
-      qs.get("m_order_id");
-
     const session = readBuyAutoSession();
-    const storedOid = session?.orderId ?? null;
-
-    if (!oid && (resume || successFlag) && storedOid) oid = storedOid;
-    // Cowpay return_url has no query string — restore pending order from sessionStorage
-    if (!oid && session?.awaitingReturn && storedOid) oid = storedOid;
-
-    const hasOrderInQs =
-      qs.has("order_id") ||
-      qs.has("orderId") ||
-      qs.has("mOrderId") ||
-      qs.has("m_order_id");
-    const fromGateway = (resume || successFlag) && !!oid;
-    const sessionMatches = !!oid && !!storedOid && String(oid) === String(storedOid) && hasOrderInQs;
-    const fromCowpayReturn = !!oid && !!storedOid && session?.awaitingReturn;
-
-    if ((fromGateway || sessionMatches || fromCowpayReturn) && oid) {
-      setAutoPayOrderId(String(oid));
-      setStep(4);
+    if (initialGateway.autoPayOrderId || session?.resumeStep === 4) {
       applyBuyDraftToState(session ?? {}, setNetwork, setBuyAsset, setInr);
-      writeBuyAutoSession({
-        orderId: String(oid),
-        awaitingReturn: false,
-        network: session?.network,
-        buyAsset: session?.buyAsset,
-        inr: session?.inr,
-      });
+      if (session?.orderId) {
+        writeBuyAutoSession({
+          orderId: session.orderId,
+          awaitingReturn: false,
+          resumeStep: 4,
+          network: session.network,
+          buyAsset: session.buyAsset,
+          inr: session.inr,
+        });
+      }
     }
-
-    const stripQs = resume || successFlag || hasOrderInQs;
-    if (stripQs) {
-      window.history.replaceState({}, "", window.location.pathname + window.location.hash);
-    }
+    stripGatewayQueryFromUrl();
   }, []);
 
   useEffect(() => {

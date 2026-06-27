@@ -68,6 +68,7 @@ function Landing() {
       <SiteHeader />
       <main className="flex-1">
         <Hero rate={rate} whatsappUrl={wa} />
+        <LiveTransactionsFeed />
         <Steps />
         <LiveTransactionsFeed />
         <Trust />

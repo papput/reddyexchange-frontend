@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import { toast } from "sonner";
 import { SESSION_EXPIRED_FLASH_KEY, USER_AUTH_STORAGE_KEY } from "@/lib/constants";
+import { isTokenExpired } from "@/lib/jwt";
 
 /**
  * Axios `baseURL` should be `/api` in dev (Vite proxy → backend) or `https://host/api` in production.
@@ -41,19 +42,6 @@ function readToken(): string | null {
   }
 }
 
-/** JWT `exp` (seconds since epoch), if present and parseable — not cryptographically verified. */
-function readJwtExpSeconds(token: string): number | null {
-  try {
-    const seg = token.split(".")[1];
-    if (!seg) return null;
-    const json = atob(seg.replace(/-/g, "+").replace(/_/g, "/"));
-    const payload = JSON.parse(json) as { exp?: unknown };
-    return typeof payload.exp === "number" && Number.isFinite(payload.exp) ? payload.exp : null;
-  } catch {
-    return null;
-  }
-}
-
 function requestSentBearer(config: InternalAxiosRequestConfig | undefined): boolean {
   if (!config?.headers) return false;
   const h = config.headers;
@@ -65,7 +53,7 @@ function requestSentBearer(config: InternalAxiosRequestConfig | undefined): bool
 }
 
 const SESSION_TOAST_TITLE = "You've been signed out";
-const SESSION_TOAST_DESCRIPTION = "Your session expired. Please sign in again to continue.";
+const SESSION_TOAST_DESCRIPTION = "Logged out due to token expiry. Please sign in again to continue.";
 
 let sessionInvalidationInFlight = false;
 
@@ -108,8 +96,7 @@ export function clearUserAuthStorage() {
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = readToken();
   if (token) {
-    const expSec = readJwtExpSeconds(token);
-    if (expSec != null && expSec * 1000 <= Date.now()) {
+    if (isTokenExpired(token)) {
       void invalidateSessionAndNotify();
       return Promise.reject(
         new axios.AxiosError("Session expired", "ERR_BAD_REQUEST", config, undefined, undefined),

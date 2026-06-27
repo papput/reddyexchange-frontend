@@ -1,7 +1,8 @@
 // Auth state + formatting helpers (transactions load from API via React Query).
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { USER_AUTH_STORAGE_KEY } from "@/lib/constants";
+import { USER_AUTH_STORAGE_KEY, SESSION_EXPIRED_FLASH_KEY } from "@/lib/constants";
 import { apiFetchProfile, type ApiUser } from "@/lib/api";
+import { isTokenExpired } from "@/lib/jwt";
 
 const DEFAULT_RATE = 91;
 
@@ -160,7 +161,17 @@ export function getAuth(): AuthState {
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem(USER_AUTH_STORAGE_KEY);
   if (raw === authSnapshot.raw) {
-    return authSnapshot.value;
+    const cached = authSnapshot.value;
+    if (cached?.token && isTokenExpired(cached.token)) {
+      try {
+        sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
+      } catch {
+        /* ignore */
+      }
+      persistAuth(null);
+      return null;
+    }
+    return cached;
   }
   if (!raw) {
     authSnapshot = { raw: null, value: null };
@@ -168,6 +179,15 @@ export function getAuth(): AuthState {
   }
   try {
     const value = JSON.parse(raw) as AuthState;
+    if (value?.token && isTokenExpired(value.token)) {
+      try {
+        sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
+      } catch {
+        /* ignore */
+      }
+      persistAuth(null);
+      return null;
+    }
     authSnapshot = { raw, value };
     return value;
   } catch {
