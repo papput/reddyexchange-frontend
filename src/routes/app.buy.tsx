@@ -34,15 +34,20 @@ import { FormattedUsdt, InrPerUsdtRate, UsdtMark, UsdtWord } from "@/components/
 import { cn } from "@/lib/utils";
 import {
   BUY_AUTO_SESSION_KEY,
+  clearBuyAutoSession,
+  clearBuyAutoSessionIfWrongUser,
+  clearGatewayReturnPending,
   getInitialBuyGatewayState,
+  parseGatewayReturn,
   readBuyAutoSession,
+  sessionBelongsToUser,
   stripGatewayQueryFromUrl,
   writeBuyAutoSession,
 } from "@/lib/buyGateway";
 
 export const Route = createFileRoute("/app/buy")({
   head: () => ({ meta: [{ title: `Buy — ${site.siteName}` }] }),
-  component: BuyFlow,
+  component: () => <BuyFlow />,
 });
 
 const FALLBACK_MIN_INR = 2000;
@@ -144,7 +149,7 @@ function buildBuyBankImpsWhatsappMessage(opts: {
   return lines.join("\n");
 }
 
-function BuyFlow() {
+export function BuyFlow({ variant = "default" }: { variant?: "default" | "public-return" }) {
   const nav = useNavigate();
   const qc = useQueryClient();
   const auth = useAuth();
@@ -160,7 +165,7 @@ function BuyFlow() {
   const upiMode = settings?.upiMode ?? "manual";
   const isAutoUpi = upiMode === "auto";
 
-  const initialGateway = getInitialBuyGatewayState();
+  const initialGateway = getInitialBuyGatewayState(auth?.user?.id ?? null);
   const [step, setStep] = useState(initialGateway.step);
   const [inr, setInr] = useState<number>(FALLBACK_MIN_INR);
   const [walletAddress, setWalletAddress] = useState("");
@@ -205,6 +210,15 @@ function BuyFlow() {
   }, [settings, minInr]);
 
   useEffect(() => {
+    if (!auth?.user?.id) return;
+    clearBuyAutoSessionIfWrongUser(auth.user.id);
+    if (!sessionBelongsToUser(auth.user.id) && step === 4 && initialGateway.autoPayOrderId) {
+      setStep(1);
+      setAutoPayOrderId(null);
+    }
+  }, [auth?.user?.id]);
+
+  useEffect(() => {
     if (!auth?.token) return;
     void apiTrackBuyStep({ step, amountINR: step === 2 ? inr : undefined }).catch(() => {});
   }, [auth?.token, step, inr]);
@@ -216,11 +230,20 @@ function BuyFlow() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const session = readBuyAutoSession();
-    if (initialGateway.autoPayOrderId || session?.resumeStep === 4) {
-      applyBuyDraftToState(session ?? {}, setNetwork, setBuyAsset, setInr);
-      if (session?.orderId) {
+    const freshReturn = Boolean(parseGatewayReturn(window.location.search).isGatewayReturn);
+    if ((freshReturn || initialGateway.autoPayOrderId) && session) {
+      if (session.userId && auth?.user?.id && session.userId !== auth.user.id) {
+        clearBuyAutoSession();
+        setStep(1);
+        setAutoPayOrderId(null);
+        stripGatewayQueryFromUrl();
+        return;
+      }
+      applyBuyDraftToState(session, setNetwork, setBuyAsset, setInr);
+      if (session.orderId && (freshReturn || sessionBelongsToUser(auth?.user?.id))) {
         writeBuyAutoSession({
           orderId: session.orderId,
+          userId: session.userId ?? auth?.user?.id,
           awaitingReturn: false,
           resumeStep: 4,
           network: session.network,
@@ -271,6 +294,7 @@ function BuyFlow() {
         setManualFallbackPay(true);
         writeBuyAutoSession({
           orderId: String(oid),
+          userId: auth?.user?.id,
           awaitingReturn: false,
           network,
           buyAsset,
@@ -285,6 +309,7 @@ function BuyFlow() {
       setManualFallbackPay(false);
       writeBuyAutoSession({
         orderId: oid,
+        userId: auth?.user?.id,
         awaitingReturn: true,
         network,
         buyAsset,
@@ -327,6 +352,7 @@ function BuyFlow() {
       setAutoPayOrderId(null);
       setManualFallbackPay(false);
       sessionStorage.removeItem(BUY_AUTO_SESSION_KEY);
+      clearGatewayReturnPending();
       setStep(3);
       return;
     }
@@ -334,6 +360,11 @@ function BuyFlow() {
   };
 
   const submit = async () => {
+    if (!auth?.token) {
+      toast.error("Please sign in to submit your payment proof");
+      nav({ to: "/login" });
+      return;
+    }
     if (!utr.trim() || utr.trim().length < 6) return toast.error("Enter a valid UTR / reference");
     if (!proofFile) return toast.error("Upload payment screenshot / proof");
     setSubmitting(true);
@@ -359,6 +390,7 @@ function BuyFlow() {
         setOrderId(id);
         setAutoPayOrderId(null);
         sessionStorage.removeItem(BUY_AUTO_SESSION_KEY);
+      clearGatewayReturnPending();
       } else {
         const fd = new FormData();
         fd.append("amountINR", String(inr));
@@ -407,7 +439,7 @@ function BuyFlow() {
     setManualFallbackPay(false);
     setAmountLead("inr");
     setUsdtInput("");
-    sessionStorage.removeItem(BUY_AUTO_SESSION_KEY);
+    clearBuyAutoSession();
   };
 
   if (settingsLoading || !settings) {
@@ -426,8 +458,31 @@ function BuyFlow() {
   const isGatewayReturnLoading = step === 3 && Boolean(autoPayOrderId) && !manualFallbackPay;
   const showStep3Continue = step === 3 && !isAutoUpiGatewayOnlyStep && !isGatewayReturnLoading;
 
+  const showGatewaySuccessBanner =
+    step === 4 && Boolean(autoPayOrderId) && (variant === "public-return" || !auth?.token);
+
   return (
     <div>
+      {showGatewaySuccessBanner && (
+        <div className="mb-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+          <p className="font-semibold text-emerald-400">Payment received successfully</p>
+          <p className="mt-1 text-sm text-secondary">
+            {auth?.token
+              ? "Submit your UTR and payment screenshot below to complete your order."
+              : "Sign in to your account to submit proof and complete this order."}
+          </p>
+          {!auth?.token && (
+            <Button
+              type="button"
+              size="sm"
+              className="mt-3 gradient-primary border-0"
+              onClick={() => nav({ to: "/login" })}
+            >
+              Sign in to continue
+            </Button>
+          )}
+        </div>
+      )}
       <h1 className="text-2xl font-bold tracking-tight mb-1">Buy crypto</h1>
       <p className="text-sm text-secondary mb-5 flex flex-wrap items-center gap-x-1.5 gap-y-1">
         <span className="inline-flex items-center gap-1">

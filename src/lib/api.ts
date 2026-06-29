@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import { toast } from "sonner";
-import { SESSION_EXPIRED_FLASH_KEY, USER_AUTH_STORAGE_KEY } from "@/lib/constants";
+import { SESSION_EXPIRED_FLASH_KEY, USER_AUTH_STORAGE_KEY, GATEWAY_RETURN_PENDING_KEY } from "@/lib/constants";
 import { isTokenExpired } from "@/lib/jwt";
 
 /**
@@ -62,12 +62,30 @@ async function invalidateSessionAndNotify() {
   sessionInvalidationInFlight = true;
   try {
     const { logout } = await import("@/lib/store");
+    const { isGatewayReturnPath, hasPendingBuyResume } = await import("@/lib/buyGateway");
     logout();
     const path = window.location.pathname;
+    const search = window.location.search;
+    const gatewayReturn = isGatewayReturnPath(path, search) || hasPendingBuyResume();
+
     const onAuthPage =
       path.startsWith("/login") ||
       path.startsWith("/register") ||
       path.startsWith("/forgot-password");
+
+    if (gatewayReturn) {
+      try {
+        sessionStorage.removeItem(SESSION_EXPIRED_FLASH_KEY);
+        sessionStorage.setItem(GATEWAY_RETURN_PENDING_KEY, "1");
+      } catch {
+        /* ignore */
+      }
+      if (!path.startsWith("/buy")) {
+        window.location.assign(`/buy${search}`);
+      }
+      return;
+    }
+
     if (onAuthPage) {
       toast.info(SESSION_TOAST_TITLE, {
         description: SESSION_TOAST_DESCRIPTION,

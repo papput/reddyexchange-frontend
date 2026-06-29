@@ -1,6 +1,6 @@
 // Auth state + formatting helpers (transactions load from API via React Query).
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { USER_AUTH_STORAGE_KEY, SESSION_EXPIRED_FLASH_KEY } from "@/lib/constants";
+import { USER_AUTH_STORAGE_KEY, SESSION_EXPIRED_FLASH_KEY, GATEWAY_RETURN_PENDING_KEY } from "@/lib/constants";
 import { apiFetchProfile, type ApiUser } from "@/lib/api";
 import { isTokenExpired } from "@/lib/jwt";
 
@@ -145,6 +145,15 @@ let authSnapshot: { raw: string | null; value: AuthState } = {
 
 export type AuthState = { token: string; user: User } | null;
 
+function shouldSuppressExpiryFlash(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return sessionStorage.getItem(GATEWAY_RETURN_PENDING_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function normalizeApiUser(u: ApiUser): User {
   return {
     id: String(u._id),
@@ -163,10 +172,12 @@ export function getAuth(): AuthState {
   if (raw === authSnapshot.raw) {
     const cached = authSnapshot.value;
     if (cached?.token && isTokenExpired(cached.token)) {
-      try {
-        sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
-      } catch {
-        /* ignore */
+      if (!shouldSuppressExpiryFlash()) {
+        try {
+          sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
+        } catch {
+          /* ignore */
+        }
       }
       persistAuth(null);
       return null;
@@ -180,10 +191,12 @@ export function getAuth(): AuthState {
   try {
     const value = JSON.parse(raw) as AuthState;
     if (value?.token && isTokenExpired(value.token)) {
-      try {
-        sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
-      } catch {
-        /* ignore */
+      if (!shouldSuppressExpiryFlash()) {
+        try {
+          sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
+        } catch {
+          /* ignore */
+        }
       }
       persistAuth(null);
       return null;
@@ -210,6 +223,9 @@ function persistAuth(next: AuthState) {
 }
 
 export function setAuth(token: string, user: User) {
+  void import("@/lib/buyGateway").then(({ clearBuyAutoSessionIfWrongUser }) => {
+    clearBuyAutoSessionIfWrongUser(user.id);
+  });
   persistAuth({ token, user });
 }
 
@@ -237,6 +253,7 @@ export async function refreshProfile() {
 }
 
 export function logout() {
+  void import("@/lib/buyGateway").then(({ clearBuyAutoSession }) => clearBuyAutoSession());
   persistAuth(null);
 }
 

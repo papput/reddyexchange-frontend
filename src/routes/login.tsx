@@ -7,8 +7,13 @@ import { AuthField } from "@/components/auth/AuthField";
 import { AuthSubmitButton } from "@/components/auth/AuthSubmitButton";
 import { Input } from "@/components/ui/input";
 import { apiLogin, getApiErrorMessage } from "@/lib/api";
-import { SESSION_EXPIRED_FLASH_KEY } from "@/lib/constants";
-import { hasPendingBuyResume } from "@/lib/buyGateway";
+import { SESSION_EXPIRED_FLASH_KEY, GATEWAY_RETURN_PENDING_KEY } from "@/lib/constants";
+import {
+  clearBuyAutoSessionIfWrongUser,
+  hasPendingBuyResume,
+  readBuyAutoSession,
+  writeBuyAutoSession,
+} from "@/lib/buyGateway";
 import { normalizeApiUser, setAuth } from "@/lib/store";
 import { Lock, Shield, UserRound } from "lucide-react";
 import { site } from "@/config/site";
@@ -33,9 +38,15 @@ function LoginPage() {
   const [identifier, setId] = useState("");
   const [password, setPw] = useState("");
   const [loading, setLoading] = useState(false);
+  const [paymentReturn, setPaymentReturn] = useState(false);
 
   useEffect(() => {
     try {
+      if (sessionStorage.getItem(GATEWAY_RETURN_PENDING_KEY) === "1") {
+        setPaymentReturn(true);
+        sessionStorage.removeItem(SESSION_EXPIRED_FLASH_KEY);
+        return;
+      }
       if (sessionStorage.getItem(SESSION_EXPIRED_FLASH_KEY) !== "1") return;
       sessionStorage.removeItem(SESSION_EXPIRED_FLASH_KEY);
       toast.info("You've been signed out", {
@@ -58,9 +69,20 @@ function LoginPage() {
     try {
       const { data } = await apiLogin(identifier, password);
       if (!data?.token || !data?.data?.user) throw new Error("Invalid server response");
-      setAuth(data.token, normalizeApiUser(data.data.user));
-      toast.success("Welcome back");
-      nav({ to: hasPendingBuyResume() ? "/app/buy" : "/app" });
+      const user = normalizeApiUser(data.data.user);
+      clearBuyAutoSessionIfWrongUser(user.id);
+      const pending = readBuyAutoSession();
+      if (pending?.orderId && (pending.resumeStep === 4 || pending.awaitingReturn)) {
+        if (!pending.userId) {
+          writeBuyAutoSession({ ...pending, userId: user.id });
+        } else if (pending.userId !== user.id) {
+          // Another account's order — do not resume
+        }
+      }
+      setAuth(data.token, user);
+      toast.success(paymentReturn ? "Signed in — complete your order below" : "Welcome back");
+      const resume = hasPendingBuyResume(user.id);
+      nav({ to: resume ? "/app/buy" : "/app" });
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -71,8 +93,12 @@ function LoginPage() {
   return (
     <AuthShell
       variant="login"
-      title="Welcome back"
-      subtitle={`Access your ${site.siteName} dashboard — buy, sell, withdraw, and track every order in one place.`}
+      title={paymentReturn ? "Payment successful" : "Welcome back"}
+      subtitle={
+        paymentReturn
+          ? "Your UPI payment went through. Sign in to submit your UTR and screenshot and finish your buy order."
+          : `Access your ${site.siteName} dashboard — buy, sell, withdraw, and track every order in one place.`
+      }
       footer={
         <>
           New here? <AuthFooterLink to="/register">Create a free account</AuthFooterLink>
@@ -110,7 +136,7 @@ function LoginPage() {
           </Link>
         </div>
         <AuthSubmitButton loading={loading} className="h-[3.25rem] sm:h-14 text-base sm:text-lg">
-          Sign in
+          {paymentReturn ? "Sign in & complete order" : "Sign in"}
         </AuthSubmitButton>
       </form>
     </AuthShell>

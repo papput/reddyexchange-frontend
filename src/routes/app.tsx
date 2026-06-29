@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { usePublicSettings } from "@/hooks/use-public-settings";
 import { buildWhatsAppUrl, defaultWhatsAppMessage } from "@/lib/contact-links";
-import { captureGatewayReturnIfPresent } from "@/lib/buyGateway";
-import { SESSION_EXPIRED_FLASH_KEY } from "@/lib/constants";
+import { captureGatewayReturnIfPresent, isGatewayReturnPath, parseGatewayReturn } from "@/lib/buyGateway";
+import { SESSION_EXPIRED_FLASH_KEY, GATEWAY_RETURN_PENDING_KEY } from "@/lib/constants";
 import whatsappIcon from "@/assets/whatsapp.svg";
 
 export const Route = createFileRoute("/app")({
@@ -17,6 +17,17 @@ export const Route = createFileRoute("/app")({
     captureGatewayReturnIfPresent(location.pathname, location.search);
     const auth = getAuth();
     if (!auth) {
+      const parsed = parseGatewayReturn(location.search);
+      const onBuy =
+        location.pathname === "/app/buy" ||
+        location.pathname.endsWith("/buy");
+      if (onBuy && (parsed.isGatewayReturn || isGatewayReturnPath(location.pathname, location.search))) {
+        throw redirect({
+          to: "/buy",
+          search: location.search,
+          replace: true,
+        });
+      }
       throw redirect({ to: "/login", replace: true });
     }
   },
@@ -49,6 +60,9 @@ function AppLayout() {
   useEffect(() => {
     if (!hydrated) return;
     const checkSession = () => {
+      const path = window.location.pathname;
+      if (isGatewayReturnPath(path, window.location.search)) return;
+
       const hadAuth = Boolean(auth?.token);
       const valid = getAuth();
       if (hadAuth && !valid) {
@@ -97,7 +111,10 @@ function AppLayout() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { logout(); nav({ to: "/" }); }}
+              onClick={() => {
+                logout();
+                nav({ to: "/" });
+              }}
               className="text-muted-foreground hover:text-foreground"
             >
               <LogOut className="h-4 w-4" />

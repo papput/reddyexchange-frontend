@@ -1,4 +1,5 @@
 import type { Network } from "@/lib/store";
+import { GATEWAY_RETURN_PENDING_KEY } from "@/lib/constants";
 
 export const BUY_AUTO_SESSION_KEY = "neon_buy_auto_order_v1";
 
@@ -6,6 +7,8 @@ export type BuyAsset = "standard" | "pex";
 
 export type BuyAutoSession = {
   orderId: string;
+  /** Owner of this pending order — prevents cross-account step-4 bleed */
+  userId?: string;
   awaitingReturn?: boolean;
   /** After gateway return or re-login — resume buy flow at proof step */
   resumeStep?: number;
@@ -53,6 +56,41 @@ function hasOrderInQuery(qs: URLSearchParams): boolean {
   );
 }
 
+export function markGatewayReturnPending() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(GATEWAY_RETURN_PENDING_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearGatewayReturnPending() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(GATEWAY_RETURN_PENDING_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function isGatewayReturnPending(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return sessionStorage.getItem(GATEWAY_RETURN_PENDING_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function isGatewayReturnPath(pathname: string, search?: unknown): boolean {
+  if (pathname === "/buy" || pathname === "/app/buy" || pathname.endsWith("/buy")) {
+    const parsed = parseGatewayReturn(search ?? (typeof window !== "undefined" ? window.location.search : ""));
+    if (parsed.isGatewayReturn) return true;
+  }
+  return isGatewayReturnPending();
+}
+
 export function readBuyAutoSession(): BuyAutoSession | null {
   if (typeof window === "undefined") return null;
   try {
@@ -62,6 +100,7 @@ export function readBuyAutoSession(): BuyAutoSession | null {
     if (!parsed?.orderId) return null;
     return {
       orderId: String(parsed.orderId),
+      userId: parsed.userId ? String(parsed.userId) : undefined,
       awaitingReturn: Boolean(parsed.awaitingReturn),
       resumeStep: typeof parsed.resumeStep === "number" ? parsed.resumeStep : undefined,
       network: parsed.network,
@@ -78,9 +117,34 @@ export function writeBuyAutoSession(data: BuyAutoSession) {
   sessionStorage.setItem(BUY_AUTO_SESSION_KEY, JSON.stringify(data));
 }
 
-export function hasPendingBuyResume(): boolean {
+export function clearBuyAutoSession() {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(BUY_AUTO_SESSION_KEY);
+  clearGatewayReturnPending();
+}
+
+/** Drop stale resume data when another account is signed in. */
+export function clearBuyAutoSessionIfWrongUser(currentUserId: string | null | undefined) {
+  const session = readBuyAutoSession();
+  if (!session?.userId || !currentUserId) return;
+  if (session.userId !== currentUserId) {
+    clearBuyAutoSession();
+  }
+}
+
+export function sessionBelongsToUser(userId: string | null | undefined): boolean {
+  const session = readBuyAutoSession();
+  if (!session) return false;
+  if (!session.userId) return true;
+  if (!userId) return false;
+  return session.userId === userId;
+}
+
+export function hasPendingBuyResume(userId?: string | null): boolean {
   const s = readBuyAutoSession();
-  return Boolean(s?.orderId && (s.resumeStep === 4 || s.awaitingReturn));
+  if (!s?.orderId || !(s.resumeStep === 4 || s.awaitingReturn)) return false;
+  if (userId != null && s.userId && s.userId !== userId) return false;
+  return true;
 }
 
 /** Parse SilkPay / Cowpay / bridge return query params. */
@@ -118,7 +182,7 @@ export function parseGatewayReturn(search: unknown): GatewayReturnParse {
 }
 
 /**
- * Persist gateway return before auth guards run (e.g. expired JWT → login).
+ * Persist gateway return before auth guards run (e.g. expired JWT).
  * Call from `/buy`, `/app/buy`, or parent `/app` beforeLoad.
  */
 export function captureGatewayReturnIfPresent(pathname: string, search: unknown): GatewayReturnParse | null {
@@ -128,9 +192,11 @@ export function captureGatewayReturnIfPresent(pathname: string, search: unknown)
   const parsed = parseGatewayReturn(search);
   if (!parsed.isGatewayReturn || !parsed.orderId) return parsed;
 
+  markGatewayReturnPending();
   const session = readBuyAutoSession();
   writeBuyAutoSession({
     orderId: parsed.orderId,
+    userId: session?.userId,
     awaitingReturn: false,
     resumeStep: 4,
     network: session?.network,
@@ -141,7 +207,10 @@ export function captureGatewayReturnIfPresent(pathname: string, search: unknown)
   return parsed;
 }
 
-export function getInitialBuyGatewayState(): { step: number; autoPayOrderId: string | null } {
+export function getInitialBuyGatewayState(userId?: string | null): {
+  step: number;
+  autoPayOrderId: string | null;
+} {
   if (typeof window === "undefined") return { step: 1, autoPayOrderId: null };
 
   const parsed = parseGatewayReturn(window.location.search);
@@ -151,6 +220,12 @@ export function getInitialBuyGatewayState(): { step: number; autoPayOrderId: str
 
   const session = readBuyAutoSession();
   if (session?.resumeStep === 4 && session.orderId) {
+    if (session.userId && userId && session.userId !== userId) {
+      return { step: 1, autoPayOrderId: null };
+    }
+    if (session.userId && !userId) {
+      return { step: 1, autoPayOrderId: null };
+    }
     return { step: 4, autoPayOrderId: session.orderId };
   }
 
@@ -166,4 +241,12 @@ export function stripGatewayQueryFromUrl() {
   if (resume || successFlag || hasOrderInQs) {
     window.history.replaceState({}, "", window.location.pathname + window.location.hash);
   }
+}
+
+/** True when `/buy` should host the public gateway-return flow (not redirect to /app/buy). */
+export function shouldUsePublicBuyReturnRoute(search: unknown): boolean {
+  const parsed = parseGatewayReturn(search);
+  if (parsed.isGatewayReturn) return true;
+  const session = readBuyAutoSession();
+  return Boolean(session?.awaitingReturn || (session?.resumeStep === 4 && session.orderId));
 }
