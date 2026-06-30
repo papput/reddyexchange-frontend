@@ -203,6 +203,18 @@
     }
   }
 
+  @keyframes live-rate-halo {
+    0%,
+    100% {
+      opacity: 0.45;
+      transform: scale(1.05);
+    }
+    50% {
+      opacity: 0.85;
+      transform: scale(1.18);
+    }
+  }
+
   @keyframes gradient-x {
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -506,6 +518,19 @@
     animation: live-pulse-dot 1.6s ease-in-out infinite;
   }
 
+  .animate-live-rate-halo {
+    animation: live-rate-halo 2.6s ease-in-out infinite;
+  }
+
+  .live-rate-halo-bg {
+    background: radial-gradient(
+      ellipse at center,
+      color-mix(in oklab, var(--primary) 55%, transparent) 0%,
+      color-mix(in oklab, var(--accent) 35%, transparent) 45%,
+      transparent 72%
+    );
+  }
+
   .animate-live-badge-glow {
     animation: live-badge-glow 2.4s ease-in-out infinite;
   }
@@ -517,5 +542,78 @@
   .auth-card-glow {
     filter: drop-shadow(0 24px 48px -16px color-mix(in oklab, var(--brand-violet) 32%, transparent))
       drop-shadow(0 28px 52px -18px color-mix(in oklab, var(--brand-blue) 18%, transparent));
+  }
+
+  .wallet-card-frame {
+    position: relative;
+    isolation: isolate;
+    overflow: visible;
+  }
+
+  .wallet-card-halo {
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--brand-violet) 55%, transparent) 0%,
+      color-mix(in oklab, var(--brand-blue) 40%, transparent) 50%,
+      color-mix(in oklab, var(--brand-pink) 18%, transparent) 100%
+    );
+    animation: sell-price-glow 3.4s ease-in-out infinite;
+  }
+
+  .wallet-card-surface {
+    background:
+      linear-gradient(
+        145deg,
+        color-mix(in oklab, var(--brand-violet) 42%, #0c0a14) 0%,
+        color-mix(in oklab, var(--brand-violet) 28%, #12101c) 38%,
+        color-mix(in oklab, var(--brand-blue) 22%, #0a1018) 100%
+      );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .dashboard-page {
+    isolation: isolate;
+  }
+
+  .dashboard-hero-mesh {
+    background:
+      radial-gradient(ellipse 90% 70% at 12% 8%, color-mix(in oklab, var(--brand-violet) 38%, transparent), transparent 58%),
+      radial-gradient(ellipse 70% 55% at 88% 12%, color-mix(in oklab, var(--brand-blue) 32%, transparent), transparent 52%),
+      radial-gradient(ellipse 80% 60% at 55% 95%, color-mix(in oklab, var(--brand-pink) 16%, transparent), transparent 55%),
+      color-mix(in oklab, var(--background) 88%, #1a1428);
+  }
+
+  .dashboard-dark-sheet {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, #12101a 92%, var(--surface-2)) 0%,
+        color-mix(in oklab, #09080f 96%, var(--background)) 100%
+      );
+    border-top: 1px solid oklch(1 0 0 / 8%);
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 4%);
+  }
+
+  @media (min-width: 640px) {
+    .dashboard-dark-sheet {
+      border: 1px solid oklch(1 0 0 / 8%);
+      border-top: 1px solid oklch(1 0 0 / 8%);
+    }
+  }
+
+  .dashboard-stat-card {
+    background: color-mix(in oklab, var(--surface-2) 72%, transparent);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  .dashboard-panel {
+    background: color-mix(in oklab, var(--surface-2) 68%, transparent);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    box-shadow:
+      0 24px 48px -28px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 oklch(1 0 0 / 6%);
   }
 }

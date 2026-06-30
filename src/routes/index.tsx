@@ -18,8 +18,8 @@ import { HomeTopBanner } from "@/components/site/HomeTopBanner";
 import { LiveTransactionsFeed } from "@/components/site/LiveTransactionsFeed";
 import { CasinoStatValue } from "@/components/site/CasinoStatValue";
 import { SiteFooter } from "@/components/site/SiteFooter";
-import { HeroBrandWordmark } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useAuth, type Network, type PayMethod } from "@/lib/store";
 import { usePublicSettings } from "@/hooks/use-public-settings";
 import { site } from "@/config/site";
@@ -70,7 +70,6 @@ function Landing() {
         <Hero rate={rate} whatsappUrl={wa} />
         <LiveTransactionsFeed />
         <Steps />
-        <LiveTransactionsFeed />
         <Trust />
       </main>
       <SiteFooter />
@@ -81,25 +80,35 @@ function Landing() {
 function LiveRateBadge({ rate, variant }: { rate: number; variant: "mobile" | "desktop" }) {
   const isMobile = variant === "mobile";
   return (
-    <div
-      className={
-        isMobile
-          ? "lg:hidden flex w-full justify-center mb-1 sm:mb-2"
-          : "hidden lg:inline-flex"
-      }
-    >
-      <div
-        className={
-          isMobile
-            ? "inline-flex items-center gap-3 px-6 py-3.5 rounded-full glass text-lg font-bold animate-live-rate-bounce animate-sell-price-glow shadow-[0_0_28px_-6px] shadow-primary/40"
-            : "inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass text-sm font-semibold animate-sell-price-glow"
-        }
-      >
-        <Sparkles className={isMobile ? "h-5 w-5 text-accent shrink-0" : "h-4 w-4 text-accent"} />
-        <span className="text-secondary">Live rate today</span>
-        <span className="text-foreground inline-flex items-center gap-1">
-          <InrPerUsdtRate inr={rate} size={isMobile ? "sm" : "xs"} />
-        </span>
+    <div className={isMobile ? "lg:hidden w-full mb-2 sm:mb-3" : "hidden lg:flex w-full max-w-md mb-2"}>
+      <div className="relative w-full min-w-0">
+        <span
+          className="live-rate-halo-bg pointer-events-none absolute inset-0 -z-10 rounded-[1.25rem] sm:rounded-[1.35rem] blur-xl animate-live-rate-halo"
+          aria-hidden
+        />
+        <div
+          className={cn(
+            "relative w-full min-w-0 flex flex-nowrap items-center whitespace-nowrap rounded-[1.25rem] sm:rounded-[1.35rem] glass",
+            "animate-sell-price-glow animate-live-rate-bounce",
+            isMobile
+              ? "justify-between gap-2 px-3.5 py-2.5 text-sm font-semibold shadow-[0_0_22px_-6px] shadow-primary/35"
+              : "justify-center gap-3 px-6 py-3 text-base lg:text-lg font-bold shadow-[0_0_36px_-4px] shadow-primary/50",
+          )}
+        >
+          <span className="inline-flex min-w-0 items-center gap-2">
+            <Sparkles
+              className={cn("text-accent shrink-0", isMobile ? "h-4 w-4" : "h-5 w-5 lg:h-6 lg:w-6")}
+            />
+            <span className="text-secondary truncate">Live rate today</span>
+          </span>
+          <span className="text-foreground shrink-0 pl-2">
+            <InrPerUsdtRate
+              inr={rate}
+              size={isMobile ? "xs" : "sm"}
+              className="flex-nowrap whitespace-nowrap"
+            />
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -112,10 +121,9 @@ function Hero({ rate, whatsappUrl }: { rate: number; whatsappUrl: string }) {
         <div className="absolute inset-0 grid-bg opacity-40" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full blur-3xl opacity-30 gradient-primary" />
       </div>
-      <div className="container mx-auto px-3 sm:px-4 pt-4 sm:pt-12 md:pt-24 pb-5 sm:pb-10 md:pb-12">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start lg:items-center">
-          <div className="order-2 lg:order-1 space-y-4 sm:space-y-6 animate-fade-up">
-            <HeroBrandWordmark className="hidden lg:flex" />
+      <div className="container mx-auto px-3 sm:px-4 pt-3 sm:pt-4 lg:pt-5 pb-5 sm:pb-8 lg:pb-10">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-start lg:items-center">
+          <div className="order-2 lg:order-1 space-y-3 sm:space-y-4 animate-fade-up">
             <LiveRateBadge rate={rate} variant="desktop" />
             <h1 className="hidden md:block text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
               fast & Secure{" "}
@@ -131,8 +139,8 @@ function Hero({ rate, whatsappUrl }: { rate: number; whatsappUrl: string }) {
                 size="lg"
                 className="gradient-primary border-0 hover-glow text-base h-12 px-7"
               >
-                <Link to="/register">
-                  Get Started <ArrowRight className="ml-1 h-4 w-4" />
+                <Link to="/login">
+                  Login <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
               <Button
@@ -141,7 +149,7 @@ function Hero({ rate, whatsappUrl }: { rate: number; whatsappUrl: string }) {
                 size="lg"
                 className="h-12 px-7 glass border-border/60"
               >
-                <Link to="/login">I have an account</Link>
+                <Link to="/register">Sign up</Link>
               </Button>
             </div>
             <div className="hidden md:flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-xs text-muted-foreground">

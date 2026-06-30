@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { apiCreateWithdrawal, getApiErrorMessage } from "@/lib/api";
 import { effectiveWithdrawalMinUsdt, useAuth, type Network } from "@/lib/store";
 import { FormattedUsdt, UsdtWord } from "@/components/app/UsdtMark";
+import { FlowUserGreeting } from "@/components/app/FlowUserGreeting";
 import { site } from "@/config/site";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -110,19 +111,13 @@ function WithdrawPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild className="shrink-0 -ml-2">
+      <div className="flex items-start gap-3">
+        <Button variant="ghost" size="icon" asChild className="shrink-0 -ml-2 mt-0.5">
           <Link to="/app" aria-label="Back">
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Withdraw {site.coinSymbol}</h1>
-          <p className="text-sm text-muted-foreground">
-            Send wallet balance to your TRC20, ERC20, or BEP20{" "}
-            <UsdtWord size="xs" className="text-muted-foreground font-normal" /> address.
-          </p>
-        </div>
+        <FlowUserGreeting title={`Withdraw ${site.coinSymbol}`} className="mb-0 flex-1 min-w-0" />
       </div>
 
       <div className="rounded-2xl border-2 border-border/80 bg-background/90 dark:bg-muted/25 p-5 sm:p-6 flex items-start gap-4 shadow-sm">

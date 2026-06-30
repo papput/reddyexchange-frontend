@@ -155,7 +155,7 @@ export function InrPerUsdtRate({
   className?: string;
 }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 flex-wrap tabular-nums", className)}>
+    <span className={cn("inline-flex items-center gap-1 tabular-nums", className)}>
       <span>₹{inr.toFixed(2)}</span>
       <span className="text-muted-foreground">/</span>
       <UsdtWord size={size} />

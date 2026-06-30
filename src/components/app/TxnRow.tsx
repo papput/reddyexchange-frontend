@@ -5,8 +5,9 @@ import { site } from "@/config/site";
 import { FormattedUsdt, UsdtWord } from "@/components/app/UsdtMark";
 import { ArrowDownToLine, ArrowUpFromLine, Wallet, ChevronRight } from "lucide-react";
 import { listStatusToUi, TxnStatusPill } from "@/components/app/TxnStatus";
+import { cn } from "@/lib/utils";
 
-export function TxnRow({ txn }: { txn: Txn }) {
+export function TxnRow({ txn, variant = "default" }: { txn: Txn; variant?: "default" | "dashboard" | "dashboard-dark" }) {
   const isBuy = txn.type === "buy";
   const isWithdrawal = txn.type === "withdrawal";
   const buyLabel =
@@ -29,17 +30,32 @@ export function TxnRow({ txn }: { txn: Txn }) {
     ? `${txn.network} · ${new Date(txn.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}`
     : `${txn.network} · ${new Date(txn.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}`;
 
+  const isDashboard = variant === "dashboard";
+  const isDashboardDark = variant === "dashboard-dark";
+
   return (
     <Link
       to="/app/transaction"
       search={{ id: txn.documentId, kind: txn.type }}
-      className="glass rounded-2xl p-4 flex items-center justify-between hover-lift hover:border-primary/25 border border-transparent transition-colors group"
+      className={cn(
+        "flex items-center justify-between transition-all duration-300 group",
+        isDashboardDark
+          ? "py-4 hover:bg-white/[0.02]"
+          : isDashboard
+            ? "rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 hover:border-primary/25 hover:bg-white/[0.05] hover:-translate-y-0.5"
+            : "glass rounded-2xl p-4 hover-lift hover:border-primary/25 border border-transparent transition-colors",
+      )}
     >
       <div className="flex items-center gap-3 min-w-0">
         <div
-          className={`h-10 w-10 rounded-xl grid place-items-center shrink-0 ${
-            isBuy ? "bg-accent/15" : isWithdrawal ? "bg-violet-500/15" : "bg-primary/15"
-          }`}
+          className={cn(
+            "h-10 w-10 sm:h-11 sm:w-11 rounded-xl grid place-items-center shrink-0 border",
+            isBuy
+              ? "bg-gradient-to-br from-accent/25 to-accent/5 border-accent/20"
+              : isWithdrawal
+                ? "bg-gradient-to-br from-violet-500/25 to-violet-500/5 border-violet-500/20"
+                : "bg-gradient-to-br from-primary/25 to-primary/5 border-primary/20",
+          )}
         >
           {isBuy ? (
             <ArrowDownToLine className="h-4.5 w-4.5 text-accent" />
@@ -77,7 +93,14 @@ export function TxnRow({ txn }: { txn: Txn }) {
           <div className="text-sm font-medium">{isWithdrawal ? "—" : fmtINR(txn.inr)}</div>
           <TxnStatusPill status={listStatusToUi(txn.status)} size="sm" className="mt-0.5" />
         </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block" />
+        <ChevronRight
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-opacity shrink-0",
+            isDashboardDark || isDashboard
+              ? "opacity-40 group-hover:opacity-100"
+              : "opacity-0 group-hover:opacity-100 hidden sm:block",
+          )}
+        />
       </div>
     </Link>
   );

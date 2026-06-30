@@ -14,6 +14,8 @@ import { site } from "@/config/site";
 import { ProofUploadPreview } from "@/components/app/ProofUploadPreview";
 import { fmtINR, usdtToInr, type PayMethod } from "@/lib/store";
 import { FormattedUsdt, UsdtWord } from "@/components/app/UsdtMark";
+import { FlowUserGreeting } from "@/components/app/FlowUserGreeting";
+import { FlowRateHighlight } from "@/components/app/FlowRateHighlight";
 import { BankImpsMark, UpiMark } from "@/components/app/ExchangeMark";
 
 export const Route = createFileRoute("/app/sell")({
@@ -34,33 +36,6 @@ const LABELS: ReactNode[] = [
 ];
 
 type SellNetwork = "TRC20" | "BEP20";
-
-/** Sell rate — compact card, gradient price + glow (no extra copy) */
-function SellPriceGlow({ sellRate }: { sellRate: number }) {
-  return (
-    <div className="mb-4 flex justify-center px-1">
-      <div
-        className="relative inline-flex min-w-0 max-w-[280px] flex-col items-center rounded-xl border border-primary/35 bg-gradient-to-br from-primary/20 via-surface to-accent/10 px-5 py-3 text-center animate-sell-price-glow sm:max-w-xs"
-        title={`Sell rate ₹${sellRate.toFixed(2)} per USDT (Tether)`}
-      >
-        <div
-          className="pointer-events-none absolute -inset-px rounded-xl bg-gradient-to-r from-primary/25 via-accent/20 to-primary/25 opacity-50 blur-lg"
-          aria-hidden
-        />
-        <p className="relative text-[10px] font-semibold uppercase tracking-widest text-accent mb-1">Sell rate</p>
-        <p className="relative text-2xl sm:text-3xl font-bold tabular-nums tracking-tight leading-none">
-          <span className="gradient-text drop-shadow-[0_0_16px_color-mix(in_oklab,var(--accent)_40%,transparent)]">
-            ₹{sellRate.toFixed(2)}
-          </span>
-          <span className="text-sm sm:text-base font-semibold text-muted-foreground inline-flex items-center gap-1">
-            {" "}
-            / <UsdtWord size="sm" className="text-muted-foreground font-semibold" />
-          </span>
-        </p>
-      </div>
-    </div>
-  );
-}
 
 function SellFlow() {
   const nav = useNavigate();
@@ -169,10 +144,19 @@ function SellFlow() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight mb-1 inline-flex items-center gap-2">
-        Sell <UsdtWord size="md" />
-      </h1>
-      <SellPriceGlow sellRate={sellRate} />
+      <FlowUserGreeting
+        title={
+          <span className="inline-flex items-center gap-2">
+            Sell <UsdtWord size="md" />
+          </span>
+        }
+      />
+      <FlowRateHighlight
+        variant="sell"
+        rate={sellRate}
+        extra={`Min. ${MIN_SELL_USDT} USDT`}
+        className="mb-4"
+      />
       <StepIndicator step={step} total={TOTAL_STEPS} labels={LABELS} />
 
       <div className="glass-strong rounded-2xl p-5 sm:p-6 pb-6 animate-fade-up card-shell">

@@ -27,10 +27,12 @@ import {
   type PayMethod,
 } from "@/lib/store";
 import { BuyFlowStepChoosePayAndToken, type BuyAsset } from "@/components/app/BuyFlowStepChoosePayAndToken";
+import { FlowUserGreeting } from "@/components/app/FlowUserGreeting";
+import { FlowRateHighlight } from "@/components/app/FlowRateHighlight";
 import { site } from "@/config/site";
 import { IconBsc, IconEth, IconPex, IconTron } from "@/components/app/NetworkTokenPicker";
 import { ProofUploadPreview } from "@/components/app/ProofUploadPreview";
-import { FormattedUsdt, InrPerUsdtRate, UsdtMark, UsdtWord } from "@/components/app/UsdtMark";
+import { FormattedUsdt, UsdtMark, UsdtWord } from "@/components/app/UsdtMark";
 import { cn } from "@/lib/utils";
 import {
   BUY_AUTO_SESSION_KEY,
@@ -483,14 +485,13 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
           )}
         </div>
       )}
-      <h1 className="text-2xl font-bold tracking-tight mb-1">Buy crypto</h1>
-      <p className="text-sm text-secondary mb-5 flex flex-wrap items-center gap-x-1.5 gap-y-1">
-        <span className="inline-flex items-center gap-1">
-          Rate <InrPerUsdtRate inr={price} size="xs" />
-        </span>
-        <span>·</span>
-        <span>Minimum {fmtINR(minInr)}</span>
-      </p>
+      <FlowUserGreeting title="Buy crypto" />
+      <FlowRateHighlight
+        variant="buy"
+        rate={price}
+        extra={`Min. ${fmtINR(minInr)}`}
+        className="mb-5 -mt-2"
+      />
       <BuyFlowProgressBar step={step} total={TOTAL_STEPS} label={STEP_LABELS[step - 1] ?? ""} />
 
       <div
