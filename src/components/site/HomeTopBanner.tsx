@@ -5,7 +5,7 @@ type HomeTopBannerProps = {
   whatsappUrl?: string;
 };
 
-const BANNER_TEXT = "Contact Us On Whatsapp If Your Order Not Delivered Within 5min";
+const BANNER_TEXT = "Contact Us On Whatsapp If Your Order Not Delivered Within 15min";
 
 /** Matches exchange card / glass panels — one lightweight border token */
 const liteBorder = "border border-border/50";
@@ -30,7 +30,7 @@ export function HomeTopBanner({ whatsappUrl }: HomeTopBannerProps) {
       />
       <p className="text-sm sm:text-base font-semibold leading-snug text-center text-balance max-w-3xl">
         Contact Us On{" "}
-        <span className="text-accent font-bold">Whatsapp</span> If Your Order Not Delivered Within 5min
+        <span className="text-accent font-bold">Whatsapp</span> If Your Order Not Delivered Within 15min
       </p>
     </>
   );

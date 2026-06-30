@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, ArrowDownToLine, ArrowUpFromLine, User, MoreHorizontal, Wallet } from "lucide-react";
+import { Home, ArrowDownToLine, ArrowUpFromLine, User, Receipt, Wallet } from "lucide-react";
 
 const items = [
   { to: "/app", label: "Home", icon: Home, exact: true },
@@ -7,7 +7,7 @@ const items = [
   { to: "/app/sell", label: "Sell", icon: ArrowUpFromLine },
   { to: "/app/withdraw", label: "Withdraw", icon: Wallet },
   { to: "/app/profile", label: "Profile", icon: User },
-  { to: "/app/more", label: "More", icon: MoreHorizontal },
+  { to: "/app/transactions", label: "Transactions", icon: Receipt },
 ] as const;
 
 export function BottomNav() {

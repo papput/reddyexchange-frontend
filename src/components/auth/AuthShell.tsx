@@ -22,7 +22,7 @@ const TRUST_ITEMS = [
   {
     icon: BadgeCheck,
     label: "Trusted platform",
-    desc: "Built for Indian crypto traders",
+    desc: "Built for Indian USDT traders",
   },
 ] as const;
 
@@ -56,13 +56,13 @@ export function AuthShell({
       title
     );
 
-  const isLoginStack = variant === "login";
+  const isStackedLayout = variant === "login" || variant === "register";
 
   const marketingAside = (
     <aside
       className={cn(
         "hidden lg:flex flex-col gap-10 animate-fade-up",
-        isLoginStack && "w-full max-w-2xl mx-auto",
+        isStackedLayout && "w-full max-w-2xl mx-auto",
       )}
     >
       <div className="relative">
@@ -108,10 +108,10 @@ export function AuthShell({
     <div
       className={cn(
         "w-full max-w-[440px] animate-fade-up",
-        isLoginStack ? "mx-auto" : "mx-auto lg:max-w-none lg:mx-0 [animation-delay:80ms]",
+        isStackedLayout ? "mx-auto" : "mx-auto lg:max-w-none lg:mx-0 [animation-delay:80ms]",
       )}
     >
-      <div className={cn("mb-4 sm:mb-7", isLoginStack ? "text-center" : "lg:mb-8 text-center lg:text-left")}>
+      <div className={cn("mb-4 sm:mb-7", isStackedLayout ? "text-center" : "lg:mb-8 text-center lg:text-left")}>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-semibold uppercase tracking-wider text-accent mb-2 sm:mb-4">
           <Sparkles className="h-3 w-3" />
           {variant === "register" ? "Free signup" : variant === "login" ? "Member access" : site.siteName}
@@ -122,7 +122,7 @@ export function AuthShell({
         <p
           className={cn(
             "hidden sm:block text-secondary text-sm sm:text-[15px] mt-3 leading-relaxed max-w-md",
-            isLoginStack ? "mx-auto" : "mx-auto lg:mx-0",
+            isStackedLayout ? "mx-auto" : "mx-auto lg:mx-0",
           )}
         >
           {subtitle}
@@ -154,7 +154,7 @@ export function AuthShell({
         className={cn(
           "mt-6 px-4 py-3.5 rounded-2xl text-center text-sm text-secondary leading-relaxed",
           "glass border border-border/40",
-          !isLoginStack && "lg:text-left",
+          !isStackedLayout && "lg:text-left",
         )}
       >
         {footer}
@@ -212,12 +212,12 @@ export function AuthShell({
         <div
           className={cn(
             "max-w-6xl mx-auto",
-            isLoginStack
+            isStackedLayout
               ? "flex flex-col gap-10 lg:gap-12"
               : "grid lg:grid-cols-[1.05fr,minmax(0,440px)] gap-12 lg:gap-20 items-center",
           )}
         >
-          {isLoginStack ? (
+          {isStackedLayout ? (
             <>
               {formSection}
               {marketingAside}

@@ -50,7 +50,7 @@ function Landing() {
   const wa = buildWhatsAppUrl(settings?.whatsappNumber ?? "", defaultWhatsAppMessage(settings));
   const orderDelayWa = buildWhatsAppUrl(
     settings?.whatsappNumber ?? "",
-    "Hi, my order has not been delivered within 5 minutes. Please help.",
+    "Hi, my order has not been delivered within 15 minutes. Please help.",
   );
 
   useEffect(() => {

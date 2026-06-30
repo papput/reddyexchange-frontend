@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Receipt } from "lucide-react";
 import { site } from "@/config/site";
 import { useUserTransactions } from "@/hooks/use-user-transactions";
@@ -44,9 +44,6 @@ function TransactionsPage() {
           ))}
         </div>
       )}
-      <Link to="/app/more" className="inline-block text-sm text-accent hover:underline">
-        ← Back to More
-      </Link>
     </div>
   );
 }

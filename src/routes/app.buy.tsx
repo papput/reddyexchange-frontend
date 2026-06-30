@@ -136,7 +136,7 @@ function buildBuyBankImpsWhatsappMessage(opts: {
   }
 
   const lines = [
-    "Hello — I would like to pay by bank IMPS for my crypto buy.",
+    "Hello — I would like to pay by bank IMPS for my USDT buy.",
     "",
     `Amount (INR): ${fmtINR(inr)}`,
     `USDT (estimated net): ${fmtUSDT(usdt)}`,
@@ -485,7 +485,7 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
           )}
         </div>
       )}
-      <FlowUserGreeting title="Buy crypto" />
+      <FlowUserGreeting title="Buy USDT" />
       <FlowRateHighlight
         variant="buy"
         rate={price}
