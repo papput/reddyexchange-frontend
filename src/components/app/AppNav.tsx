@@ -6,8 +6,8 @@ const items = [
   { to: "/app/buy", label: "Buy", icon: ArrowDownToLine },
   { to: "/app/sell", label: "Sell", icon: ArrowUpFromLine },
   { to: "/app/withdraw", label: "Withdraw", icon: Wallet },
-  { to: "/app/profile", label: "Profile", icon: User },
   { to: "/app/transactions", label: "Transactions", icon: Receipt },
+  { to: "/app/profile", label: "Profile", icon: User },
 ] as const;
 
 export function BottomNav() {

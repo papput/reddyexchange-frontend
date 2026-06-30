@@ -132,7 +132,7 @@ function LiveRow({
 function FeedSkeleton() {
   return (
     <div className="space-y-2.5 p-3 sm:p-4">
-      {Array.from({ length: 6 }).map((_, i) => (
+      {Array.from({ length: 10 }).map((_, i) => (
         <div
           key={i}
           className="h-[4.5rem] sm:h-14 rounded-xl border border-border/30 bg-surface/40 animate-pulse"
