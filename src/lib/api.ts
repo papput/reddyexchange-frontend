@@ -77,6 +77,7 @@ async function invalidateSessionAndNotify() {
       try {
         sessionStorage.removeItem(SESSION_EXPIRED_FLASH_KEY);
         sessionStorage.setItem(GATEWAY_RETURN_PENDING_KEY, "1");
+        localStorage.setItem(GATEWAY_RETURN_PENDING_KEY, "1");
       } catch {
         /* ignore */
       }
@@ -403,6 +404,40 @@ export async function apiGetAutoUpiDraft(orderId: string) {
       buyAsset?: string;
     };
   }>(`/buy/upi/auto/draft?${q}`);
+}
+
+/** Public — restore step 4 after gateway return (no auth). */
+export async function apiGetAutoUpiResumeStatus(orderId: string) {
+  const q = new URLSearchParams({ orderId });
+  return apiGet<{
+    success: boolean;
+    data: {
+      orderId: string;
+      paymentConfirmed: boolean;
+      needsProof: boolean;
+      amountINR: number;
+      usdtAmount?: number;
+      network?: string;
+      buyAsset?: string;
+      webhookUtr?: string;
+    };
+  }>(`/buy/upi/auto/resume-status?${q}`);
+}
+
+/** Logged-in — paid gateway orders awaiting UTR + screenshot. */
+export async function apiListPendingProofDrafts() {
+  return apiGet<{
+    success: boolean;
+    data: Array<{
+      orderId: string;
+      amountINR: number;
+      usdtAmount?: number;
+      network?: string;
+      buyAsset?: string;
+      webhookUtr?: string;
+      provider?: string;
+    }>;
+  }>("/buy/upi/auto/pending-proof");
 }
 
 /** After user pays on gateway: UTR + screenshot → final buy transaction. */

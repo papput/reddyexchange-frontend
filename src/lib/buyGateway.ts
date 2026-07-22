@@ -2,6 +2,8 @@ import type { Network } from "@/lib/store";
 import { GATEWAY_RETURN_PENDING_KEY } from "@/lib/constants";
 
 export const BUY_AUTO_SESSION_KEY = "neon_buy_auto_order_v1";
+const BUY_AUTO_SESSION_LS_KEY = "neon_buy_auto_order_v1_ls";
+const BUY_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type BuyAsset = "standard" | "pex";
 
@@ -15,6 +17,7 @@ export type BuyAutoSession = {
   network?: Network;
   buyAsset?: BuyAsset;
   inr?: number;
+  savedAt?: number;
 };
 
 export type GatewayReturnParse = {
@@ -56,10 +59,56 @@ function hasOrderInQuery(qs: URLSearchParams): boolean {
   );
 }
 
+function normalizeBuyAutoSession(parsed: BuyAutoSession | null): BuyAutoSession | null {
+  if (!parsed?.orderId) return null;
+  return {
+    orderId: String(parsed.orderId),
+    userId: parsed.userId ? String(parsed.userId) : undefined,
+    awaitingReturn: Boolean(parsed.awaitingReturn),
+    resumeStep: typeof parsed.resumeStep === "number" ? parsed.resumeStep : undefined,
+    network: parsed.network,
+    buyAsset: parsed.buyAsset,
+    inr: typeof parsed.inr === "number" ? parsed.inr : undefined,
+    savedAt: typeof parsed.savedAt === "number" ? parsed.savedAt : undefined,
+  };
+}
+
+function readPersistedBuySession(): BuyAutoSession | null {
+  if (typeof window === "undefined") return null;
+
+  const sources: string[] = [];
+  try {
+    const ss = sessionStorage.getItem(BUY_AUTO_SESSION_KEY);
+    if (ss) sources.push(ss);
+  } catch {
+    /* ignore */
+  }
+  try {
+    const ls = localStorage.getItem(BUY_AUTO_SESSION_LS_KEY);
+    if (ls) sources.push(ls);
+  } catch {
+    /* ignore */
+  }
+
+  let best: BuyAutoSession | null = null;
+  for (const raw of sources) {
+    try {
+      const parsed = normalizeBuyAutoSession(JSON.parse(raw) as BuyAutoSession);
+      if (!parsed) continue;
+      if (parsed.savedAt && Date.now() - parsed.savedAt > BUY_SESSION_TTL_MS) continue;
+      if (!best || (parsed.savedAt ?? 0) >= (best.savedAt ?? 0)) best = parsed;
+    } catch {
+      /* ignore */
+    }
+  }
+  return best;
+}
+
 export function markGatewayReturnPending() {
   if (typeof window === "undefined") return;
   try {
     sessionStorage.setItem(GATEWAY_RETURN_PENDING_KEY, "1");
+    localStorage.setItem(GATEWAY_RETURN_PENDING_KEY, "1");
   } catch {
     /* ignore */
   }
@@ -69,6 +118,7 @@ export function clearGatewayReturnPending() {
   if (typeof window === "undefined") return;
   try {
     sessionStorage.removeItem(GATEWAY_RETURN_PENDING_KEY);
+    localStorage.removeItem(GATEWAY_RETURN_PENDING_KEY);
   } catch {
     /* ignore */
   }
@@ -77,7 +127,10 @@ export function clearGatewayReturnPending() {
 export function isGatewayReturnPending(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return sessionStorage.getItem(GATEWAY_RETURN_PENDING_KEY) === "1";
+    return (
+      sessionStorage.getItem(GATEWAY_RETURN_PENDING_KEY) === "1" ||
+      localStorage.getItem(GATEWAY_RETURN_PENDING_KEY) === "1"
+    );
   } catch {
     return false;
   }
@@ -88,38 +141,43 @@ export function isGatewayReturnPath(pathname: string, search?: unknown): boolean
     const parsed = parseGatewayReturn(search ?? (typeof window !== "undefined" ? window.location.search : ""));
     if (parsed.isGatewayReturn) return true;
   }
-  return isGatewayReturnPending();
+  return isGatewayReturnPending() || hasPendingBuyResume();
 }
 
 export function readBuyAutoSession(): BuyAutoSession | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = sessionStorage.getItem(BUY_AUTO_SESSION_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as BuyAutoSession;
-    if (!parsed?.orderId) return null;
-    return {
-      orderId: String(parsed.orderId),
-      userId: parsed.userId ? String(parsed.userId) : undefined,
-      awaitingReturn: Boolean(parsed.awaitingReturn),
-      resumeStep: typeof parsed.resumeStep === "number" ? parsed.resumeStep : undefined,
-      network: parsed.network,
-      buyAsset: parsed.buyAsset,
-      inr: typeof parsed.inr === "number" ? parsed.inr : undefined,
-    };
-  } catch {
-    return null;
-  }
+  return readPersistedBuySession();
 }
 
 export function writeBuyAutoSession(data: BuyAutoSession) {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem(BUY_AUTO_SESSION_KEY, JSON.stringify(data));
+  const existing = readPersistedBuySession();
+  const next: BuyAutoSession = {
+    ...existing,
+    ...data,
+    orderId: String(data.orderId),
+    savedAt: Date.now(),
+  };
+  const raw = JSON.stringify(next);
+  try {
+    sessionStorage.setItem(BUY_AUTO_SESSION_KEY, raw);
+  } catch {
+    /* ignore */
+  }
+  try {
+    localStorage.setItem(BUY_AUTO_SESSION_LS_KEY, raw);
+  } catch {
+    /* ignore */
+  }
 }
 
 export function clearBuyAutoSession() {
   if (typeof window === "undefined") return;
-  sessionStorage.removeItem(BUY_AUTO_SESSION_KEY);
+  try {
+    sessionStorage.removeItem(BUY_AUTO_SESSION_KEY);
+    localStorage.removeItem(BUY_AUTO_SESSION_LS_KEY);
+  } catch {
+    /* ignore */
+  }
   clearGatewayReturnPending();
 }
 
@@ -136,7 +194,9 @@ export function sessionBelongsToUser(userId: string | null | undefined): boolean
   const session = readBuyAutoSession();
   if (!session) return false;
   if (!session.userId) return true;
-  if (!userId) return false;
+  if (!userId) {
+    return session.resumeStep === 4 || Boolean(session.awaitingReturn);
+  }
   return session.userId === userId;
 }
 
@@ -163,6 +223,7 @@ export function parseGatewayReturn(search: unknown): GatewayReturnParse {
 
   if (!oid && (resume || successFlag) && storedOid) oid = storedOid;
   if (!oid && session?.awaitingReturn && storedOid) oid = storedOid;
+  if (!oid && session?.resumeStep === 4 && storedOid) oid = storedOid;
 
   const fromGateway = Boolean(oid) && (resume || successFlag);
   const fromCowpayReturn = Boolean(oid) && Boolean(session?.awaitingReturn);
@@ -221,9 +282,6 @@ export function getInitialBuyGatewayState(userId?: string | null): {
   const session = readBuyAutoSession();
   if (session?.resumeStep === 4 && session.orderId) {
     if (session.userId && userId && session.userId !== userId) {
-      return { step: 1, autoPayOrderId: null };
-    }
-    if (session.userId && !userId) {
       return { step: 1, autoPayOrderId: null };
     }
     return { step: 4, autoPayOrderId: session.orderId };

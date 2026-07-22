@@ -13,7 +13,9 @@ import {
   apiConfirmAutoUpi,
   apiCreateBuy,
   apiGetAutoUpiDraft,
+  apiGetAutoUpiResumeStatus,
   apiInitiateAutoUpi,
+  apiListPendingProofDrafts,
   apiTrackBuyStep,
   getApiErrorMessage,
 } from "@/lib/api";
@@ -35,11 +37,11 @@ import { ProofUploadPreview } from "@/components/app/ProofUploadPreview";
 import { FormattedUsdt, UsdtMark, UsdtWord } from "@/components/app/UsdtMark";
 import { cn } from "@/lib/utils";
 import {
-  BUY_AUTO_SESSION_KEY,
   clearBuyAutoSession,
   clearBuyAutoSessionIfWrongUser,
   clearGatewayReturnPending,
   getInitialBuyGatewayState,
+  markGatewayReturnPending,
   parseGatewayReturn,
   readBuyAutoSession,
   sessionBelongsToUser,
@@ -214,11 +216,94 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
   useEffect(() => {
     if (!auth?.user?.id) return;
     clearBuyAutoSessionIfWrongUser(auth.user.id);
-    if (!sessionBelongsToUser(auth.user.id) && step === 4 && initialGateway.autoPayOrderId) {
+    if (variant === "public-return") return;
+    if (!sessionBelongsToUser(auth.user.id) && step === 4 && autoPayOrderId) {
       setStep(1);
       setAutoPayOrderId(null);
     }
-  }, [auth?.user?.id]);
+  }, [auth?.user?.id, variant, step, autoPayOrderId]);
+
+  const resumeFromServer = async (orderId: string, session?: ReturnType<typeof readBuyAutoSession>) => {
+    try {
+      const { data } = await apiGetAutoUpiResumeStatus(orderId);
+      if (!data.success || !data.data) return;
+      const draft = data.data;
+      applyBuyDraftToState(draft, setNetwork, setBuyAsset, setInr);
+      setAutoPayOrderId(draft.orderId);
+      setStep(4);
+      writeBuyAutoSession({
+        orderId: draft.orderId,
+        userId: session?.userId ?? auth?.user?.id,
+        awaitingReturn: false,
+        resumeStep: 4,
+        network: (draft.network as Network) || session?.network,
+        buyAsset: (draft.buyAsset as BuyAsset) || session?.buyAsset,
+        inr: draft.amountINR ?? session?.inr,
+      });
+      markGatewayReturnPending();
+      const webhookUtr = String(draft.webhookUtr || "").trim();
+      if (webhookUtr.length >= 6) setUtr((prev) => (prev.trim() ? prev : webhookUtr));
+    } catch {
+      /* draft may not exist yet */
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const session = readBuyAutoSession();
+    const parsed = parseGatewayReturn(window.location.search);
+    const freshReturn = Boolean(parsed.isGatewayReturn);
+    const orderId = parsed.orderId || initialGateway.autoPayOrderId || session?.orderId || null;
+
+    if (orderId && (freshReturn || initialGateway.step === 4 || session?.resumeStep === 4)) {
+      if (session?.userId && auth?.user?.id && session.userId !== auth.user.id) {
+        clearBuyAutoSession();
+        setStep(1);
+        setAutoPayOrderId(null);
+        stripGatewayQueryFromUrl();
+        return;
+      }
+      if (session) applyBuyDraftToState(session, setNetwork, setBuyAsset, setInr);
+      setAutoPayOrderId(orderId);
+      setStep(4);
+      writeBuyAutoSession({
+        orderId,
+        userId: session?.userId ?? auth?.user?.id,
+        awaitingReturn: false,
+        resumeStep: 4,
+        network: session?.network,
+        buyAsset: session?.buyAsset,
+        inr: session?.inr,
+      });
+      markGatewayReturnPending();
+      void resumeFromServer(orderId, session ?? undefined);
+    }
+    stripGatewayQueryFromUrl();
+  }, []);
+
+  useEffect(() => {
+    if (!auth?.token || autoPayOrderId) return;
+    void apiListPendingProofDrafts()
+      .then(({ data }) => {
+        const pending = data.data?.[0];
+        if (!pending?.orderId) return;
+        applyBuyDraftToState(pending, setNetwork, setBuyAsset, setInr);
+        setAutoPayOrderId(pending.orderId);
+        setStep(4);
+        writeBuyAutoSession({
+          orderId: pending.orderId,
+          userId: auth.user.id,
+          awaitingReturn: false,
+          resumeStep: 4,
+          network: pending.network as Network | undefined,
+          buyAsset: pending.buyAsset as BuyAsset | undefined,
+          inr: pending.amountINR,
+        });
+        const webhookUtr = String(pending.webhookUtr || "").trim();
+        if (webhookUtr.length >= 6) setUtr((prev) => (prev.trim() ? prev : webhookUtr));
+      })
+      .catch(() => {});
+  }, [auth?.token, auth?.user?.id, autoPayOrderId]);
 
   useEffect(() => {
     if (!auth?.token) return;
@@ -228,34 +313,6 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
   useEffect(() => {
     if (step === 3 && autoPayOrderId && !manualFallbackPay) setStep(4);
   }, [step, autoPayOrderId, manualFallbackPay]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const session = readBuyAutoSession();
-    const freshReturn = Boolean(parseGatewayReturn(window.location.search).isGatewayReturn);
-    if ((freshReturn || initialGateway.autoPayOrderId) && session) {
-      if (session.userId && auth?.user?.id && session.userId !== auth.user.id) {
-        clearBuyAutoSession();
-        setStep(1);
-        setAutoPayOrderId(null);
-        stripGatewayQueryFromUrl();
-        return;
-      }
-      applyBuyDraftToState(session, setNetwork, setBuyAsset, setInr);
-      if (session.orderId && (freshReturn || sessionBelongsToUser(auth?.user?.id))) {
-        writeBuyAutoSession({
-          orderId: session.orderId,
-          userId: session.userId ?? auth?.user?.id,
-          awaitingReturn: false,
-          resumeStep: 4,
-          network: session.network,
-          buyAsset: session.buyAsset,
-          inr: session.inr,
-        });
-      }
-    }
-    stripGatewayQueryFromUrl();
-  }, []);
 
   useEffect(() => {
     if (!autoPayOrderId || !auth?.token) return;
@@ -351,11 +408,10 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
         setStep(3);
         return;
       }
-      setAutoPayOrderId(null);
-      setManualFallbackPay(false);
-      sessionStorage.removeItem(BUY_AUTO_SESSION_KEY);
-      clearGatewayReturnPending();
-      setStep(3);
+        setAutoPayOrderId(null);
+        setManualFallbackPay(false);
+        clearBuyAutoSession();
+        setStep(3);
       return;
     }
     setStep((s) => Math.max(1, s - 1));
@@ -363,6 +419,19 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
 
   const submit = async () => {
     if (!auth?.token) {
+      const session = readBuyAutoSession();
+      if (autoPayOrderId || session?.orderId) {
+        markGatewayReturnPending();
+        writeBuyAutoSession({
+          orderId: autoPayOrderId || session!.orderId,
+          userId: session?.userId,
+          awaitingReturn: false,
+          resumeStep: 4,
+          network: session?.network ?? network,
+          buyAsset: session?.buyAsset ?? buyAsset,
+          inr: session?.inr ?? inr,
+        });
+      }
       toast.error("Please sign in to submit your payment proof");
       nav({ to: "/login" });
       return;
@@ -391,8 +460,7 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
         );
         setOrderId(id);
         setAutoPayOrderId(null);
-        sessionStorage.removeItem(BUY_AUTO_SESSION_KEY);
-      clearGatewayReturnPending();
+      clearBuyAutoSession();
       } else {
         const fd = new FormData();
         fd.append("amountINR", String(inr));
@@ -478,7 +546,20 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
               type="button"
               size="sm"
               className="mt-3 gradient-primary border-0"
-              onClick={() => nav({ to: "/login" })}
+              onClick={() => {
+                const session = readBuyAutoSession();
+                markGatewayReturnPending();
+                writeBuyAutoSession({
+                  orderId: autoPayOrderId || session?.orderId || "",
+                  userId: session?.userId,
+                  awaitingReturn: false,
+                  resumeStep: 4,
+                  network: session?.network ?? network,
+                  buyAsset: session?.buyAsset ?? buyAsset,
+                  inr: session?.inr ?? inr,
+                });
+                nav({ to: "/login" });
+              }}
             >
               Sign in to continue
             </Button>

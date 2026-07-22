@@ -148,7 +148,10 @@ export type AuthState = { token: string; user: User } | null;
 function shouldSuppressExpiryFlash(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return sessionStorage.getItem(GATEWAY_RETURN_PENDING_KEY) === "1";
+    return (
+      sessionStorage.getItem(GATEWAY_RETURN_PENDING_KEY) === "1" ||
+      localStorage.getItem(GATEWAY_RETURN_PENDING_KEY) === "1"
+    );
   } catch {
     return false;
   }

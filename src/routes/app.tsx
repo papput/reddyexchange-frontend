@@ -2,13 +2,12 @@ import { createFileRoute, Outlet, Link, redirect, useNavigate } from "@tanstack/
 import { useEffect, useRef } from "react";
 import { BottomNav, SideNav } from "@/components/app/AppNav";
 import { Logo } from "@/components/brand/Logo";
-import { useAuth, useHydrated, logout, refreshProfile, getAuth } from "@/lib/store";
+import { useAuth, useHydrated, logout, refreshProfile } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { usePublicSettings } from "@/hooks/use-public-settings";
 import { buildWhatsAppUrl, defaultWhatsAppMessage } from "@/lib/contact-links";
-import { captureGatewayReturnIfPresent, isGatewayReturnPath, parseGatewayReturn } from "@/lib/buyGateway";
-import { SESSION_EXPIRED_FLASH_KEY, GATEWAY_RETURN_PENDING_KEY } from "@/lib/constants";
+import { captureGatewayReturnIfPresent, hasPendingBuyResume, isGatewayReturnPath, parseGatewayReturn } from "@/lib/buyGateway";
 import whatsappIcon from "@/assets/whatsapp.svg";
 
 export const Route = createFileRoute("/app")({
@@ -21,7 +20,10 @@ export const Route = createFileRoute("/app")({
       const onBuy =
         location.pathname === "/app/buy" ||
         location.pathname.endsWith("/buy");
-      if (onBuy && (parsed.isGatewayReturn || isGatewayReturnPath(location.pathname, location.search))) {
+      if (
+        onBuy &&
+        (parsed.isGatewayReturn || isGatewayReturnPath(location.pathname, location.search) || hasPendingBuyResume())
+      ) {
         throw redirect({
           to: "/buy",
           search: location.search,
@@ -52,35 +54,14 @@ function AppLayout() {
 
   useEffect(() => {
     if (!hydrated || auth || redirected.current) return;
+    if (hasPendingBuyResume()) {
+      redirected.current = true;
+      nav({ to: "/buy", replace: true });
+      return;
+    }
     redirected.current = true;
     nav({ to: "/login", replace: true });
   }, [hydrated, auth, nav]);
-
-  /** Re-check JWT expiry while the app is open (tab focus + interval). */
-  useEffect(() => {
-    if (!hydrated) return;
-    const checkSession = () => {
-      const path = window.location.pathname;
-      if (isGatewayReturnPath(path, window.location.search)) return;
-
-      const hadAuth = Boolean(auth?.token);
-      const valid = getAuth();
-      if (hadAuth && !valid) {
-        try {
-          sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
-        } catch {
-          /* ignore */
-        }
-        nav({ to: "/login", replace: true });
-      }
-    };
-    const id = window.setInterval(checkSession, 30_000);
-    window.addEventListener("focus", checkSession);
-    return () => {
-      window.clearInterval(id);
-      window.removeEventListener("focus", checkSession);
-    };
-  }, [hydrated, auth?.token, nav]);
 
   if (!hydrated || !auth) {
     return null;

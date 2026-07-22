@@ -42,7 +42,7 @@ function LoginPage() {
 
   useEffect(() => {
     try {
-      if (sessionStorage.getItem(GATEWAY_RETURN_PENDING_KEY) === "1") {
+      if (sessionStorage.getItem(GATEWAY_RETURN_PENDING_KEY) === "1" || localStorage.getItem(GATEWAY_RETURN_PENDING_KEY) === "1" || hasPendingBuyResume()) {
         setPaymentReturn(true);
         sessionStorage.removeItem(SESSION_EXPIRED_FLASH_KEY);
         return;
@@ -73,11 +73,12 @@ function LoginPage() {
       clearBuyAutoSessionIfWrongUser(user.id);
       const pending = readBuyAutoSession();
       if (pending?.orderId && (pending.resumeStep === 4 || pending.awaitingReturn)) {
-        if (!pending.userId) {
-          writeBuyAutoSession({ ...pending, userId: user.id });
-        } else if (pending.userId !== user.id) {
-          // Another account's order — do not resume
-        }
+        writeBuyAutoSession({
+          ...pending,
+          userId: pending.userId && pending.userId !== user.id ? pending.userId : user.id,
+          awaitingReturn: false,
+          resumeStep: 4,
+        });
       }
       setAuth(data.token, user);
       toast.success(paymentReturn ? "Signed in — complete your order below" : "Welcome back");
