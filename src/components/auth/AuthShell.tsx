@@ -37,7 +37,7 @@ export function AuthShell({
   subtitle: string;
   children: React.ReactNode;
   footer: React.ReactNode;
-  variant?: "login" | "register";
+  variant?: "login" | "register" | "reset";
 }) {
   const { data: settings } = usePublicSettings();
   const rate = settings?.price ?? 91;
@@ -56,7 +56,8 @@ export function AuthShell({
       title
     );
 
-  const isStackedLayout = variant === "login" || variant === "register";
+  // Reset password should stack like login/register: form first, marketing below.
+  const isStackedLayout = variant === "login" || variant === "register" || variant === "reset";
 
   const marketingAside = (
     <aside

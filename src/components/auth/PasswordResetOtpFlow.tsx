@@ -12,14 +12,21 @@ import {
 } from "@/lib/api";
 
 const RESEND_COOLDOWN_SEC = 60;
+const INDIAN_MOBILE_RE = /^[6-9]\d{9}$/;
+
+function normalizeMobileInput(raw: string) {
+  return raw.replace(/\D/g, "").slice(-10);
+}
 
 type Phase = "request" | "reset";
 
 type Props = {
-  /** Pre-filled account email or 10-digit mobile (e.g. logged-in user mobile). */
+  /** Pre-filled 10-digit mobile (e.g. logged-in user). */
   presetIdentifier?: string;
   /** Hide the identifier field — only use `presetIdentifier` (profile flow). */
   hideIdentifierField?: boolean;
+  /** Forgot-password page: mobile number input only. */
+  mobileOnly?: boolean;
   submitLabel?: string;
   onSuccess?: () => void;
 };
@@ -27,6 +34,7 @@ type Props = {
 export function PasswordResetOtpFlow({
   presetIdentifier = "",
   hideIdentifierField = false,
+  mobileOnly = false,
   submitLabel = "Update password",
   onSuccess,
 }: Props) {
@@ -49,12 +57,19 @@ export function PasswordResetOtpFlow({
     return () => clearInterval(t);
   }, [resendSec]);
 
-  const identTrim = identifier.trim();
-  const effectiveRequestId = hideIdentifierField ? presetIdentifier.trim() : identTrim;
+  const normalizedMobile = normalizeMobileInput(
+    hideIdentifierField ? presetIdentifier : identifier,
+  );
+  const effectiveRequestId = hideIdentifierField ? normalizeMobileInput(presetIdentifier) : normalizedMobile;
+  const mobileValid = INDIAN_MOBILE_RE.test(effectiveRequestId);
 
   const sendOtp = async () => {
     if (!effectiveRequestId) {
-      toast.error(hideIdentifierField ? "Missing account details" : "Enter your email or mobile");
+      toast.error(mobileOnly || hideIdentifierField ? "Enter your mobile number" : "Enter your email or mobile");
+      return;
+    }
+    if ((mobileOnly || hideIdentifierField) && !mobileValid) {
+      toast.error("Enter a valid 10-digit Indian mobile number");
       return;
     }
     setLoading(true);
@@ -64,7 +79,7 @@ export function PasswordResetOtpFlow({
       setMaskedPhone(data.data?.maskedPhone ?? null);
       setPhase("reset");
       setResendSec(RESEND_COOLDOWN_SEC);
-      toast.success(data.message || "OTP sent to your registered mobile");
+      toast.success(data.message || "OTP sent to your mobile");
     } catch (e) {
       toast.error(getApiErrorMessage(e));
     } finally {
@@ -73,14 +88,13 @@ export function PasswordResetOtpFlow({
   };
 
   const resend = async () => {
-    const rid = hideIdentifierField ? presetIdentifier.trim() : identTrim;
-    if (!rid) {
+    if (!effectiveRequestId || !mobileValid) {
       toast.error("Cannot resend — start again");
       return;
     }
     setLoading(true);
     try {
-      const { data } = await apiResendResetOtp(rid);
+      const { data } = await apiResendResetOtp(effectiveRequestId);
       if (!data.success) throw new Error(data.message || "Resend failed");
       setResendSec(RESEND_COOLDOWN_SEC);
       toast.success(data.message || "OTP resent");
@@ -129,17 +143,30 @@ export function PasswordResetOtpFlow({
           {!hideIdentifierField ? (
             <div className="space-y-1.5">
               <Label className="text-xs text-secondary uppercase tracking-wide">
-                Email or mobile
+                {mobileOnly ? "Mobile number" : "Email or mobile"}
               </Label>
               <div className="rounded-xl bg-surface border border-border ring-focus">
                 <Input
                   value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="you@email.com or 98xxxxxxxx"
-                  autoComplete="username"
+                  onChange={(e) =>
+                    setIdentifier(
+                      mobileOnly
+                        ? e.target.value.replace(/\D/g, "").slice(0, 10)
+                        : e.target.value,
+                    )
+                  }
+                  placeholder={mobileOnly ? "98xxxxxxxx" : "you@email.com or 98xxxxxxxx"}
+                  type={mobileOnly ? "tel" : "text"}
+                  inputMode={mobileOnly ? "numeric" : undefined}
+                  autoComplete={mobileOnly ? "tel-national" : "username"}
                   className="border-0 bg-transparent h-11"
                 />
               </div>
+              {mobileOnly ? (
+                <p className="text-xs text-muted-foreground">
+                  We&apos;ll send a 6-digit OTP via SMS to this registered number.
+                </p>
+              ) : null}
             </div>
           ) : (
             <p className="text-sm text-secondary">
@@ -158,7 +185,7 @@ export function PasswordResetOtpFlow({
           <div className="cta-shadow-zone">
             <Button
               type="button"
-              disabled={loading || !effectiveRequestId}
+              disabled={loading || !effectiveRequestId || (mobileOnly && !mobileValid)}
               onClick={sendOtp}
               className="w-full h-11 gradient-primary border-0 hover-glow"
             >

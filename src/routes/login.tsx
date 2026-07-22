@@ -50,7 +50,7 @@ function LoginPage() {
       if (sessionStorage.getItem(SESSION_EXPIRED_FLASH_KEY) !== "1") return;
       sessionStorage.removeItem(SESSION_EXPIRED_FLASH_KEY);
       toast.info("You've been signed out", {
-        description: "Logged out due to token expiry. Please sign in again to continue.",
+        description: "Session ended. Please sign in again to continue.",
         duration: 6500,
       });
     } catch {

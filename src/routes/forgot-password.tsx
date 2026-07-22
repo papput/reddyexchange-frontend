@@ -18,8 +18,9 @@ function ForgotPasswordPage() {
 
   return (
     <AuthShell
+      variant="reset"
       title="Reset password"
-      subtitle="Enter your registered email or mobile. We’ll text an OTP to your mobile on file."
+      subtitle="Enter your registered mobile number. We'll send a real OTP via SMS to reset your password."
       footer={
         <>
           Remember it? <AuthFooterLink to="/login">Back to sign in</AuthFooterLink>
@@ -27,6 +28,7 @@ function ForgotPasswordPage() {
       }
     >
       <PasswordResetOtpFlow
+        mobileOnly
         submitLabel="Set new password"
         onSuccess={() => {
           nav({ to: "/login" });

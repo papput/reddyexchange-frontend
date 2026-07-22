@@ -53,7 +53,7 @@ function requestSentBearer(config: InternalAxiosRequestConfig | undefined): bool
 }
 
 const SESSION_TOAST_TITLE = "You've been signed out";
-const SESSION_TOAST_DESCRIPTION = "Logged out due to token expiry. Please sign in again to continue.";
+const SESSION_TOAST_DESCRIPTION = "Session ended. Please sign in again to continue.";
 
 let sessionInvalidationInFlight = false;
 
