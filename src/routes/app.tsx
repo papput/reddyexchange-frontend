@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, Link, redirect, useNavigate } from "@tanstack/
 import { useEffect, useRef } from "react";
 import { BottomNav, SideNav } from "@/components/app/AppNav";
 import { Logo } from "@/components/brand/Logo";
-import { useAuth, useHydrated, logout, refreshProfile } from "@/lib/store";
+import { useAuth, useHydrated, logout, refreshProfile, getAuth } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { usePublicSettings } from "@/hooks/use-public-settings";
