@@ -140,6 +140,25 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    const url = String(error.config?.url || "");
+    const path = window.location.pathname;
+    const { hasPendingBuyResume, markGatewayReturnPending } = await import("@/lib/buyGateway");
+    const inBuyProofFlow =
+      hasPendingBuyResume() ||
+      path === "/buy" ||
+      path === "/app/buy" ||
+      path.endsWith("/buy") ||
+      url.includes("/buy/upi/auto/confirm") ||
+      url.includes("/buy/create") ||
+      url.includes("/buy/upi/auto/draft") ||
+      url.includes("/buy/upi/auto/pending-proof");
+
+    // During buy proof (step 4), don't force logout + login redirect — let submit handler show the error.
+    if (inBuyProofFlow) {
+      markGatewayReturnPending();
+      return Promise.reject(error);
+    }
+
     await invalidateSessionAndNotify();
     return Promise.reject(error);
   },

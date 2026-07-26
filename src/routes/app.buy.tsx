@@ -24,6 +24,7 @@ import {
   estimateInrFromNetUsdt,
   fmtINR,
   fmtUSDT,
+  getAuth,
   useAuth,
   type Network,
   type PayMethod,
@@ -157,6 +158,7 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
   const nav = useNavigate();
   const qc = useQueryClient();
   const auth = useAuth();
+  const liveAuth = auth ?? getAuth();
   const { data: settings, isLoading: settingsLoading } = usePublicSettings();
   const price = settings?.price ?? 91;
   const minInr = settings?.minInrLimit ?? FALLBACK_MIN_INR;
@@ -418,7 +420,8 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
   };
 
   const submit = async () => {
-    if (!auth?.token) {
+    const token = liveAuth?.token ?? getAuth()?.token;
+    if (!token) {
       const session = readBuyAutoSession();
       if (autoPayOrderId || session?.orderId) {
         markGatewayReturnPending();
@@ -460,7 +463,7 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
         );
         setOrderId(id);
         setAutoPayOrderId(null);
-      clearBuyAutoSession();
+        clearBuyAutoSession();
       } else {
         const fd = new FormData();
         fd.append("amountINR", String(inr));
@@ -486,10 +489,29 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
         setOrderId(id);
       }
       await qc.invalidateQueries({ queryKey: ["user-transactions"] });
+      clearGatewayReturnPending();
       setStep(5);
       toast.success("Order submitted");
     } catch (e) {
-      toast.error(getApiErrorMessage(e));
+      const msg = getApiErrorMessage(e);
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      if (status === 401) {
+        markGatewayReturnPending();
+        const session = readBuyAutoSession();
+        writeBuyAutoSession({
+          orderId: autoPayOrderId || session?.orderId || "",
+          userId: session?.userId,
+          awaitingReturn: false,
+          resumeStep: 4,
+          network: session?.network ?? network,
+          buyAsset: session?.buyAsset ?? buyAsset,
+          inr: session?.inr ?? inr,
+        });
+        toast.error("Session expired — please sign in and submit again");
+        nav({ to: "/login" });
+        return;
+      }
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -537,11 +559,11 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
         <div className="mb-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
           <p className="font-semibold text-emerald-400">Payment received successfully</p>
           <p className="mt-1 text-sm text-secondary">
-            {auth?.token
+            {liveAuth?.token
               ? "Submit your UTR and payment screenshot below to complete your order."
               : "Sign in to your account to submit proof and complete this order."}
           </p>
-          {!auth?.token && (
+          {!liveAuth?.token && (
             <Button
               type="button"
               size="sm"
@@ -679,8 +701,21 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
               </Button>
             )}
             {step === 4 && (
-              <Button type="button" onClick={submit} disabled={submitting} className="flex-1 gradient-primary border-0 hover-glow h-11">
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Submit <ArrowRight className="h-4 w-4 ml-1" /></>}
+              <Button
+                type="button"
+                onClick={submit}
+                disabled={submitting}
+                className="flex-1 gradient-primary border-0 hover-glow h-11"
+              >
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : liveAuth?.token ? (
+                  <>
+                    Submit <ArrowRight className="h-4 w-4 ml-1" />
+                  </>
+                ) : (
+                  <>Sign in &amp; submit</>
+                )}
               </Button>
             )}
           </div>
