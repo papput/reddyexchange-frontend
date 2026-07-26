@@ -70,11 +70,6 @@ async function invalidateSessionAndNotify() {
       path.startsWith("/register") ||
       path.startsWith("/forgot-password");
 
-    // Public gateway return page only — no login required to view step 4.
-    if (path === "/buy") {
-      return;
-    }
-
     if (onAuthPage) {
       toast.info(SESSION_TOAST_TITLE, {
         description: SESSION_TOAST_DESCRIPTION,
@@ -93,6 +88,19 @@ async function invalidateSessionAndNotify() {
       sessionInvalidationInFlight = false;
     }, 1500);
   }
+}
+
+function shouldForceLogoutOn401(error: AxiosError): boolean {
+  if (error.response?.status !== 401) return false;
+  if (requestSentBearer(error.config)) return true;
+  const data = error.response?.data as ApiErrorBody | undefined;
+  const msg = String(data?.message || data?.error || "").toLowerCase();
+  return (
+    msg.includes("token missing") ||
+    msg.includes("token expired") ||
+    msg.includes("authentication token") ||
+    msg.includes("invalid authentication")
+  );
 }
 
 export function clearUserAuthStorage() {
@@ -119,12 +127,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const status = error.response?.status;
-    if (status !== 401 || typeof window === "undefined") {
-      return Promise.reject(error);
-    }
-
-    if (!requestSentBearer(error.config)) {
+    if (typeof window === "undefined" || !shouldForceLogoutOn401(error)) {
       return Promise.reject(error);
     }
 

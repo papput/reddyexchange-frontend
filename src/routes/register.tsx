@@ -55,7 +55,7 @@ function RegisterPage() {
       if (!body?.token || !body?.data?.user) throw new Error("Invalid server response");
       setAuth(body.token, normalizeApiUser(body.data.user));
       toast.success("Account created");
-      nav({ to: "/app" });
+      nav({ to: "/app/buy" });
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err));
     } finally {

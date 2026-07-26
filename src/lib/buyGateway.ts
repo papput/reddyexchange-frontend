@@ -306,5 +306,6 @@ export function shouldUsePublicBuyReturnRoute(search: unknown): boolean {
   const parsed = parseGatewayReturn(search);
   if (parsed.isGatewayReturn) return true;
   const session = readBuyAutoSession();
-  return Boolean(session?.awaitingReturn || (session?.resumeStep === 4 && session.orderId));
+  // Only step 4 proof resume — not pre-payment steps (those require /app/buy + login).
+  return Boolean(session?.resumeStep === 4 && session.orderId);
 }

@@ -82,8 +82,7 @@ function LoginPage() {
       }
       setAuth(data.token, user);
       toast.success(paymentReturn ? "Signed in — complete your order below" : "Welcome back");
-      const resume = hasPendingBuyResume(user.id);
-      nav({ to: resume ? "/app/buy" : "/app" });
+      nav({ to: "/app/buy" });
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err));
     } finally {

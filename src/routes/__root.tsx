@@ -2,6 +2,8 @@ import { Outlet, createRootRoute, HeadContent, Scripts, Link } from "@tanstack/r
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { FloatingContact } from "@/components/site/FloatingContact";
+import { AuthSessionWatcher } from "@/components/auth/AuthSessionWatcher";
+import { guardRouteAuth } from "@/lib/authGuard";
 import { site } from "@/config/site";
 import appCss from "../styles.css?url";
 import faviconUrl from "@/assets/brand/reddy-exchange-logo.png?url";
@@ -28,6 +30,9 @@ function NotFoundComponent() {
 }
 
 export const Route = createRootRoute({
+  beforeLoad: ({ location }) => {
+    guardRouteAuth(location.pathname, location.search);
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -57,6 +62,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <head><HeadContent /></head>
       <body>
         <QueryClientProvider client={queryClient}>
+          <AuthSessionWatcher />
           {children}
           <FloatingContact />
           <Toaster />

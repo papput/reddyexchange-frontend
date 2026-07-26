@@ -256,7 +256,9 @@ export async function refreshProfile() {
 }
 
 export function logout() {
-  void import("@/lib/buyGateway").then(({ clearBuyAutoSession }) => clearBuyAutoSession());
+  void import("@/lib/buyGateway").then(({ clearBuyAutoSession, hasPendingBuyResume }) => {
+    if (!hasPendingBuyResume()) clearBuyAutoSession();
+  });
   persistAuth(null);
 }
 

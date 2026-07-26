@@ -225,6 +225,13 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
     }
   }, [auth?.user?.id, variant, step, autoPayOrderId]);
 
+  useEffect(() => {
+    if (variant !== "public-return" || liveAuth?.token) return;
+    if (step < 4 && autoPayOrderId) {
+      setStep(4);
+    }
+  }, [variant, step, liveAuth?.token, autoPayOrderId]);
+
   const resumeFromServer = async (orderId: string, session?: ReturnType<typeof readBuyAutoSession>) => {
     try {
       const { data } = await apiGetAutoUpiResumeStatus(orderId);
@@ -331,6 +338,12 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
   const inrRoundedForGateway = Math.round(Number(inr));
 
   const startAutoUpiGateway = async () => {
+    const token = liveAuth?.token ?? getAuth()?.token;
+    if (!token) {
+      toast.error("Please sign in to continue");
+      nav({ to: "/login" });
+      return;
+    }
     if (inrRoundedForGateway < minInr) {
       toast.error(`Minimum is ${fmtINR(minInr)}`);
       return;
@@ -378,6 +391,11 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
       });
       window.location.assign(url);
     } catch (e) {
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      if (status === 401) {
+        setGatewayLoading(false);
+        return;
+      }
       toast.error(getApiErrorMessage(e));
       setGatewayLoading(false);
     }
