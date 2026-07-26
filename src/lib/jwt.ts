@@ -12,8 +12,7 @@ export function readJwtExpSeconds(token: string): number | null {
 }
 
 export function isTokenExpired(token: string): boolean {
-  // Disabled: treat auth JWT as non-expiring so the UI never logs out due to `exp`.
-  // (Backend also ignores `exp` via `ignoreExpiration: true`.)
-  void token;
-  return false;
+  const exp = readJwtExpSeconds(token);
+  if (exp == null) return false;
+  return exp * 1000 <= Date.now();
 }

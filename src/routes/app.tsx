@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { usePublicSettings } from "@/hooks/use-public-settings";
 import { buildWhatsAppUrl, defaultWhatsAppMessage } from "@/lib/contact-links";
-import { captureGatewayReturnIfPresent, hasPendingBuyResume, isGatewayReturnPath, parseGatewayReturn } from "@/lib/buyGateway";
+import { captureGatewayReturnIfPresent, isGatewayReturnPath, parseGatewayReturn } from "@/lib/buyGateway";
+import { SESSION_EXPIRED_FLASH_KEY } from "@/lib/constants";
 import whatsappIcon from "@/assets/whatsapp.svg";
 
 export const Route = createFileRoute("/app")({
@@ -15,15 +16,12 @@ export const Route = createFileRoute("/app")({
     if (typeof window === "undefined") return;
     captureGatewayReturnIfPresent(location.pathname, location.search);
     const auth = getAuth();
-    if (!auth) {
+    if (!auth?.token) {
       const parsed = parseGatewayReturn(location.search);
       const onBuy =
         location.pathname === "/app/buy" ||
         location.pathname.endsWith("/buy");
-      if (
-        onBuy &&
-        (parsed.isGatewayReturn || isGatewayReturnPath(location.pathname, location.search) || hasPendingBuyResume())
-      ) {
+      if (onBuy && (parsed.isGatewayReturn || isGatewayReturnPath(location.pathname, location.search))) {
         throw redirect({
           to: "/buy",
           search: location.search,
@@ -54,14 +52,33 @@ function AppLayout() {
 
   useEffect(() => {
     if (!hydrated || auth || redirected.current) return;
-    if (hasPendingBuyResume()) {
-      redirected.current = true;
-      nav({ to: "/buy", replace: true });
-      return;
-    }
     redirected.current = true;
     nav({ to: "/login", replace: true });
   }, [hydrated, auth, nav]);
+
+  /** Re-check JWT expiry while the app is open — logout immediately if token is gone or expired. */
+  useEffect(() => {
+    if (!hydrated) return;
+    const checkSession = () => {
+      const hadAuth = Boolean(auth?.token);
+      const valid = getAuth();
+      if (hadAuth && !valid) {
+        try {
+          sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
+        } catch {
+          /* ignore */
+        }
+        logout();
+        nav({ to: "/login", replace: true });
+      }
+    };
+    const id = window.setInterval(checkSession, 30_000);
+    window.addEventListener("focus", checkSession);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", checkSession);
+    };
+  }, [hydrated, auth?.token, nav]);
 
   if (!hydrated || !auth) {
     return null;

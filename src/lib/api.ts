@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import { toast } from "sonner";
-import { SESSION_EXPIRED_FLASH_KEY, USER_AUTH_STORAGE_KEY, GATEWAY_RETURN_PENDING_KEY } from "@/lib/constants";
+import { SESSION_EXPIRED_FLASH_KEY, USER_AUTH_STORAGE_KEY } from "@/lib/constants";
 import { isTokenExpired } from "@/lib/jwt";
 
 /**
@@ -53,7 +53,7 @@ function requestSentBearer(config: InternalAxiosRequestConfig | undefined): bool
 }
 
 const SESSION_TOAST_TITLE = "You've been signed out";
-const SESSION_TOAST_DESCRIPTION = "Session ended. Please sign in again to continue.";
+const SESSION_TOAST_DESCRIPTION = "Logged out due to token expiry. Please sign in again to continue.";
 
 let sessionInvalidationInFlight = false;
 
@@ -62,28 +62,16 @@ async function invalidateSessionAndNotify() {
   sessionInvalidationInFlight = true;
   try {
     const { logout } = await import("@/lib/store");
-    const { isGatewayReturnPath, hasPendingBuyResume } = await import("@/lib/buyGateway");
     logout();
     const path = window.location.pathname;
-    const search = window.location.search;
-    const gatewayReturn = isGatewayReturnPath(path, search) || hasPendingBuyResume();
 
     const onAuthPage =
       path.startsWith("/login") ||
       path.startsWith("/register") ||
       path.startsWith("/forgot-password");
 
-    if (gatewayReturn) {
-      try {
-        sessionStorage.removeItem(SESSION_EXPIRED_FLASH_KEY);
-        sessionStorage.setItem(GATEWAY_RETURN_PENDING_KEY, "1");
-        localStorage.setItem(GATEWAY_RETURN_PENDING_KEY, "1");
-      } catch {
-        /* ignore */
-      }
-      if (!path.startsWith("/buy")) {
-        window.location.assign(`/buy${search}`);
-      }
+    // Public gateway return page only — no login required to view step 4.
+    if (path === "/buy") {
       return;
     }
 
@@ -137,25 +125,6 @@ api.interceptors.response.use(
     }
 
     if (!requestSentBearer(error.config)) {
-      return Promise.reject(error);
-    }
-
-    const url = String(error.config?.url || "");
-    const path = window.location.pathname;
-    const { hasPendingBuyResume, markGatewayReturnPending } = await import("@/lib/buyGateway");
-    const inBuyProofFlow =
-      hasPendingBuyResume() ||
-      path === "/buy" ||
-      path === "/app/buy" ||
-      path.endsWith("/buy") ||
-      url.includes("/buy/upi/auto/confirm") ||
-      url.includes("/buy/create") ||
-      url.includes("/buy/upi/auto/draft") ||
-      url.includes("/buy/upi/auto/pending-proof");
-
-    // During buy proof (step 4), don't force logout + login redirect — let submit handler show the error.
-    if (inBuyProofFlow) {
-      markGatewayReturnPending();
       return Promise.reject(error);
     }
 
