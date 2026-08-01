@@ -359,6 +359,7 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
         network,
         walletAddress: buyAsset === "pex" ? "" : walletAddress.trim(),
         buyAsset,
+        returnOrigin: typeof window !== "undefined" ? window.location.origin : undefined,
       });
       const oid = data.data?.orderId;
       if (!oid) throw new Error("Invalid payment response");

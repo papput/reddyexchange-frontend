@@ -14,7 +14,7 @@ import { isTokenExpired } from "@/lib/jwt";
  * - GET  /user/profile | PUT /user/update | GET /user/transactions | GET /user/app/routes
  * - POST /user/tracking/buy-step — body { step: 1–4, amountINR? }
  * - POST /buy/create (multipart) | GET /buy/history | GET /buy/:id
- * - POST /buy/cowpay/upi/initiate | /buy/upi/auto/initiate | /buy/upi/auto/confirm (multipart)
+ * - POST /buy/upi/auto/initiate | /buy/upi/auto/confirm (multipart)
  * - POST /sell/create (multipart) | GET /sell/history | GET /sell/:id
  * - POST /withdrawals/create (body: amountUsdt, network TRC20|ERC20|BEP20, walletAddress) | GET /withdrawals/my | GET /withdrawals/:id | POST /withdrawals/attempt
  */
@@ -383,6 +383,8 @@ export async function apiInitiateAutoUpi(body: {
   network: string;
   walletAddress: string;
   buyAsset: string;
+  /** e.g. https://reddysexch.com — used for post-payment return to the same domain */
+  returnOrigin?: string;
 }) {
   return apiPost<{
     success: boolean;
