@@ -1,18 +1,24 @@
 import { useEffect } from "react";
 import { useRouterState } from "@tanstack/react-router";
-import { isPublicPath } from "@/lib/authGuard";
+import { isBuyGatewayResumeAccess, isGatewayReturnFlowActive, isPublicPath } from "@/lib/authGuard";
 import { getAuth, logout } from "@/lib/store";
 import { SESSION_EXPIRED_FLASH_KEY } from "@/lib/constants";
 
 /** While on a protected route, re-check JWT validity and sign out if missing or expired. */
 export function AuthSessionWatcher() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const search = useRouterState({ select: (s) => s.location.search });
 
   useEffect(() => {
     if (isPublicPath(pathname)) return;
+    if (pathname === "/buy" && isBuyGatewayResumeAccess(pathname, search)) return;
+    if (isGatewayReturnFlowActive()) return;
 
     const checkSession = () => {
-      if (isPublicPath(window.location.pathname)) return;
+      const path = window.location.pathname;
+      if (isPublicPath(path)) return;
+      if (path === "/buy" && isBuyGatewayResumeAccess(path, window.location.search)) return;
+      if (isGatewayReturnFlowActive()) return;
       if (getAuth()?.token) return;
 
       logout();
@@ -31,7 +37,7 @@ export function AuthSessionWatcher() {
       window.clearInterval(id);
       window.removeEventListener("focus", checkSession);
     };
-  }, [pathname]);
+  }, [pathname, search]);
 
   return null;
 }

@@ -57,6 +57,11 @@ const SESSION_TOAST_DESCRIPTION = "Logged out due to token expiry. Please sign i
 
 let sessionInvalidationInFlight = false;
 
+async function isGatewayReturnFlowActive(): Promise<boolean> {
+  const { isGatewayReturnPending, hasPendingBuyResume } = await import("@/lib/buyGateway");
+  return isGatewayReturnPending() || hasPendingBuyResume();
+}
+
 async function invalidateSessionAndNotify() {
   if (typeof window === "undefined" || sessionInvalidationInFlight) return;
   sessionInvalidationInFlight = true;
@@ -70,16 +75,24 @@ async function invalidateSessionAndNotify() {
       path.startsWith("/register") ||
       path.startsWith("/forgot-password");
 
+    const gatewayResume =
+      (path === "/buy" || path === "/app/buy" || path.endsWith("/buy")) &&
+      (await isGatewayReturnFlowActive());
+
     if (onAuthPage) {
       toast.info(SESSION_TOAST_TITLE, {
-        description: SESSION_TOAST_DESCRIPTION,
+        description: gatewayResume
+          ? "Sign in to submit your payment proof and complete your order."
+          : SESSION_TOAST_DESCRIPTION,
         duration: 6500,
       });
     } else {
-      try {
-        sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
-      } catch {
-        /* ignore quota / private mode */
+      if (!gatewayResume) {
+        try {
+          sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
+        } catch {
+          /* ignore quota / private mode */
+        }
       }
       window.location.assign("/login");
     }
@@ -108,11 +121,14 @@ export function clearUserAuthStorage() {
   localStorage.removeItem(USER_AUTH_STORAGE_KEY);
 }
 
-api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   const token = readToken();
   if (token) {
     if (isTokenExpired(token)) {
-      void invalidateSessionAndNotify();
+      const gatewayFlow = await isGatewayReturnFlowActive();
+      if (!gatewayFlow) {
+        void invalidateSessionAndNotify();
+      }
       return Promise.reject(
         new axios.AxiosError("Session expired", "ERR_BAD_REQUEST", config, undefined, undefined),
       );
