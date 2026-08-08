@@ -7,15 +7,27 @@ import { ArrowRight, ArrowLeft, Copy, CheckCircle2, Loader2, MessageCircle } fro
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { BuyFlowProgressBar } from "@/components/app/StepIndicator";
 import { usePublicSettings } from "@/hooks/use-public-settings";
 import {
   apiConfirmAutoUpi,
+  apiAbandonAutoUpiDraft,
   apiCreateBuy,
   apiGetAutoUpiDraft,
   apiGetAutoUpiResumeStatus,
   apiInitiateAutoUpi,
   apiListPendingProofDrafts,
+  apiStartProofWindow,
   apiTrackBuyStep,
   getApiErrorMessage,
 } from "@/lib/api";
@@ -38,6 +50,7 @@ import { ProofUploadPreview } from "@/components/app/ProofUploadPreview";
 import { FormattedUsdt, UsdtMark, UsdtWord } from "@/components/app/UsdtMark";
 import { cn } from "@/lib/utils";
 import {
+  BUY_PROOF_WINDOW_MS,
   clearBuyAutoSession,
   clearBuyAutoSessionIfWrongUser,
   clearGatewayReturnPending,
@@ -154,6 +167,27 @@ function buildBuyBankImpsWhatsappMessage(opts: {
   return lines.join("\n");
 }
 
+function fmtProofCountdown(ms: number) {
+  const totalSec = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function applyProofDeadlineFromApi(
+  proofExpiresAt: string | null | undefined,
+  expiresInMs: number | undefined,
+  setProofDeadlineMs: (ms: number | null) => void,
+) {
+  if (proofExpiresAt) {
+    setProofDeadlineMs(new Date(proofExpiresAt).getTime());
+    return;
+  }
+  if (typeof expiresInMs === "number") {
+    setProofDeadlineMs(Date.now() + expiresInMs);
+  }
+}
+
 export function BuyFlow({ variant = "default" }: { variant?: "default" | "public-return" }) {
   const nav = useNavigate();
   const qc = useQueryClient();
@@ -185,6 +219,9 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
   const [autoPayOrderId, setAutoPayOrderId] = useState<string | null>(initialGateway.autoPayOrderId);
   const [manualFallbackPay, setManualFallbackPay] = useState(false);
   const [gatewayLoading, setGatewayLoading] = useState(false);
+  const [backConfirmOpen, setBackConfirmOpen] = useState(false);
+  const [proofDeadlineMs, setProofDeadlineMs] = useState<number | null>(null);
+  const [proofCountdown, setProofCountdown] = useState("");
   /** Which field user last edited for INR ↔ USDT sync */
   const [amountLead, setAmountLead] = useState<"inr" | "usdt">("inr");
   const [usdtInput, setUsdtInput] = useState("");
@@ -421,23 +458,6 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
     setStep(2);
   };
 
-  const back = () => {
-    if (step === 4 && autoPayOrderId) {
-      setUtr("");
-      setProofFile(null);
-      if (manualFallbackPay) {
-        setStep(3);
-        return;
-      }
-        setAutoPayOrderId(null);
-        setManualFallbackPay(false);
-        clearBuyAutoSession();
-        setStep(3);
-      return;
-    }
-    setStep((s) => Math.max(1, s - 1));
-  };
-
   const submit = async () => {
     const token = liveAuth?.token ?? getAuth()?.token;
     if (!token) {
@@ -530,6 +550,10 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
         nav({ to: "/login" });
         return;
       }
+      if (status === 410) {
+        void expireProofSession(msg);
+        return;
+      }
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -550,7 +574,129 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
     setManualFallbackPay(false);
     setAmountLead("inr");
     setUsdtInput("");
+    setProofDeadlineMs(null);
+    setProofCountdown("");
     clearBuyAutoSession();
+  };
+
+  const expireProofSession = async (message?: string) => {
+    if (autoPayOrderId) {
+      try {
+        await apiAbandonAutoUpiDraft(autoPayOrderId);
+      } catch {
+        /* ignore */
+      }
+    }
+    clearGatewayReturnPending();
+    toast.error(message || "Your payment proof window expired. Please start a new order.");
+    resetFlow();
+  };
+
+  useEffect(() => {
+    if (step !== 4) {
+      setProofCountdown("");
+      return;
+    }
+
+    let cancelled = false;
+
+    const anchorLocalProofWindow = () => {
+      const session = readBuyAutoSession();
+      let deadline = session?.proofExpiresAt;
+      if (!deadline) {
+        deadline = Date.now() + BUY_PROOF_WINDOW_MS;
+        writeBuyAutoSession({
+          orderId: session?.orderId || autoPayOrderId || "",
+          userId: session?.userId ?? auth?.user?.id,
+          resumeStep: 4,
+          proofExpiresAt: deadline,
+          network: session?.network ?? network,
+          buyAsset: session?.buyAsset ?? buyAsset,
+          inr: session?.inr ?? inr,
+        });
+      }
+      if (!cancelled) setProofDeadlineMs(deadline);
+    };
+
+    if (autoPayOrderId) {
+      void apiStartProofWindow(autoPayOrderId)
+        .then(({ data }) => {
+          if (cancelled) return;
+          const payload = data.data;
+          if (payload?.expired || (payload?.expiresInMs != null && payload.expiresInMs <= 0)) {
+            void expireProofSession();
+            return;
+          }
+          applyProofDeadlineFromApi(payload?.proofExpiresAt, payload?.expiresInMs, setProofDeadlineMs);
+        })
+        .catch((e) => {
+          const status = (e as { response?: { status?: number } })?.response?.status;
+          if (status === 410) void expireProofSession();
+        });
+    } else {
+      anchorLocalProofWindow();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [step, autoPayOrderId]);
+
+  useEffect(() => {
+    if (step !== 4 || !proofDeadlineMs) return;
+
+    const tick = () => {
+      const remaining = proofDeadlineMs - Date.now();
+      if (remaining <= 0) {
+        void expireProofSession();
+        return;
+      }
+      setProofCountdown(fmtProofCountdown(remaining));
+    };
+
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [step, proofDeadlineMs]);
+
+  const performBack = () => {
+    if (step === 4) {
+      setUtr("");
+      setProofFile(null);
+      setProofDeadlineMs(null);
+      setProofCountdown("");
+      if (autoPayOrderId) {
+        if (manualFallbackPay) {
+          setStep(3);
+          return;
+        }
+        void apiAbandonAutoUpiDraft(autoPayOrderId).catch(() => {});
+        setAutoPayOrderId(null);
+        setManualFallbackPay(false);
+        clearBuyAutoSession();
+        setStep(3);
+        return;
+      }
+      const session = readBuyAutoSession();
+      if (session) {
+        writeBuyAutoSession({
+          ...session,
+          proofExpiresAt: undefined,
+          resumeStep: undefined,
+        });
+      }
+      setStep(3);
+      return;
+    }
+    setStep((s) => Math.max(1, s - 1));
+  };
+
+  const back = () => {
+    if (step === 4) {
+      setBackConfirmOpen(true);
+      return;
+    }
+    performBack();
   };
 
   if (settingsLoading || !settings) {
@@ -695,6 +841,7 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
             setUtr={setUtr}
             proofFile={proofFile}
             setProofFile={setProofFile}
+            proofCountdown={proofCountdown}
           />
         )}
 
@@ -751,6 +898,21 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
           </div>
         )}
       </div>
+
+      <AlertDialog open={backConfirmOpen} onOpenChange={setBackConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Go back?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to go back? Your payment proof will not be saved and you may need to start again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay on this step</AlertDialogCancel>
+            <AlertDialogAction onClick={performBack}>Yes, go back</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -1249,16 +1411,23 @@ function StepUtrProof({
   setUtr,
   proofFile,
   setProofFile,
+  proofCountdown,
 }: {
   autoPayOrderId: string | null;
   utr: string;
   setUtr: (s: string) => void;
   proofFile: File | null;
   setProofFile: (f: File | null) => void;
+  proofCountdown?: string;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-5">
+      {proofCountdown ? (
+        <p className="text-xs text-amber-700 dark:text-amber-300 text-center">
+          Complete within <span className="font-mono font-semibold">{proofCountdown}</span> or this order will expire.
+        </p>
+      ) : null}
       {autoPayOrderId && (
         <div className="rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-secondary">
           <p className="font-medium text-foreground mb-1">Payment completed</p>

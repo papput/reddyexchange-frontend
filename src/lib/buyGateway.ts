@@ -4,6 +4,8 @@ import { GATEWAY_RETURN_PENDING_KEY } from "@/lib/constants";
 export const BUY_AUTO_SESSION_KEY = "neon_buy_auto_order_v1";
 const BUY_AUTO_SESSION_LS_KEY = "neon_buy_auto_order_v1_ls";
 const BUY_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+/** Time allowed on buy step 4 (proof) before order expires. */
+export const BUY_PROOF_WINDOW_MS = 30 * 60 * 1000;
 
 export type BuyAsset = "standard" | "pex";
 
@@ -18,6 +20,8 @@ export type BuyAutoSession = {
   buyAsset?: BuyAsset;
   inr?: number;
   savedAt?: number;
+  /** Client-side proof deadline (ms epoch) for non-gateway step 4. */
+  proofExpiresAt?: number;
 };
 
 export type GatewayReturnParse = {
@@ -70,6 +74,7 @@ function normalizeBuyAutoSession(parsed: BuyAutoSession | null): BuyAutoSession 
     buyAsset: parsed.buyAsset,
     inr: typeof parsed.inr === "number" ? parsed.inr : undefined,
     savedAt: typeof parsed.savedAt === "number" ? parsed.savedAt : undefined,
+    proofExpiresAt: typeof parsed.proofExpiresAt === "number" ? parsed.proofExpiresAt : undefined,
   };
 }
 
@@ -96,6 +101,7 @@ function readPersistedBuySession(): BuyAutoSession | null {
       const parsed = normalizeBuyAutoSession(JSON.parse(raw) as BuyAutoSession);
       if (!parsed) continue;
       if (parsed.savedAt && Date.now() - parsed.savedAt > BUY_SESSION_TTL_MS) continue;
+      if (parsed.proofExpiresAt && Date.now() >= parsed.proofExpiresAt) continue;
       if (!best || (parsed.savedAt ?? 0) >= (best.savedAt ?? 0)) best = parsed;
     } catch {
       /* ignore */

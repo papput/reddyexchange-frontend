@@ -411,6 +411,9 @@ export async function apiGetAutoUpiDraft(orderId: string) {
       usdtAmount?: number;
       network?: string;
       buyAsset?: string;
+      proofExpiresAt?: string | null;
+      expiresInMs?: number;
+      expired?: boolean;
     };
   }>(`/buy/upi/auto/draft?${q}`);
 }
@@ -429,6 +432,9 @@ export async function apiGetAutoUpiResumeStatus(orderId: string) {
       network?: string;
       buyAsset?: string;
       webhookUtr?: string;
+      proofExpiresAt?: string | null;
+      expiresInMs?: number;
+      expired?: boolean;
     };
   }>(`/buy/upi/auto/resume-status?${q}`);
 }
@@ -447,6 +453,23 @@ export async function apiListPendingProofDrafts() {
       provider?: string;
     }>;
   }>("/buy/upi/auto/pending-proof");
+}
+
+/** Public — start or return the 30-minute proof window on step 4. */
+export async function apiStartProofWindow(orderId: string) {
+  return apiPost<{
+    success: boolean;
+    data: {
+      orderId: string;
+      proofExpiresAt: string | null;
+      expiresInMs: number;
+      expired?: boolean;
+    };
+  }>("/buy/upi/auto/proof-window", { orderId });
+}
+
+export async function apiAbandonAutoUpiDraft(orderId: string) {
+  return apiPost<{ success: boolean }>("/buy/upi/auto/abandon", { orderId });
 }
 
 /** After user pays on gateway: UTR + screenshot → final buy transaction. */
