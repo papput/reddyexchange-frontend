@@ -200,6 +200,10 @@ export type PublicSettingsData = {
   buyBankImpsInstructions?: "normal" | "whatsapp";
   whatsappNumber?: string;
   whatsappMessage?: string;
+  whatsappEnabled?: boolean;
+  telegramEnabled?: boolean;
+  telegramHandle?: string;
+  telegramMessage?: string;
   primeExchUsdtWallets: { TRC20?: string; ERC20?: string; BEP20?: string };
 };
 
