@@ -72,3 +72,66 @@ export function defaultTelegramMessage(settings: PublicSettingsData | undefined)
   if (m) return m;
   return `Hi ${site.siteName}, I need help with my account.`;
 }
+
+export type SupportChannels = {
+  whatsappEnabled: boolean;
+  telegramEnabled: boolean;
+  whatsappUrl: string;
+  telegramUrl: string;
+  /** Phone only when WhatsApp channel is on (uses WhatsApp number). */
+  telHref: string;
+};
+
+/** Resolve admin-gated WhatsApp / Telegram URLs for the public site. */
+export function getSupportChannels(
+  settings: PublicSettingsData | undefined,
+  opts?: { whatsappMessage?: string; telegramMessage?: string },
+): SupportChannels {
+  const whatsappEnabled = settings?.whatsappEnabled !== false;
+  const telegramEnabled = Boolean(settings?.telegramEnabled);
+
+  const waMsg = opts?.whatsappMessage ?? defaultWhatsAppMessage(settings);
+  const tgMsg = opts?.telegramMessage ?? defaultTelegramMessage(settings);
+
+  const whatsappUrl = whatsappEnabled
+    ? buildWhatsAppUrl(settings?.whatsappNumber ?? "", waMsg)
+    : "";
+  const telegramUrl = telegramEnabled
+    ? buildTelegramUrl(settings?.telegramHandle ?? "", tgMsg)
+    : "";
+  const telHref =
+    whatsappEnabled && settings?.whatsappNumber
+      ? buildTelHref(settings.whatsappNumber)
+      : "";
+
+  return {
+    whatsappEnabled: Boolean(whatsappUrl),
+    telegramEnabled: Boolean(telegramUrl),
+    whatsappUrl,
+    telegramUrl,
+    telHref,
+  };
+}
+
+/** Human label for a single support CTA based on which channels are available. */
+export function supportContactLabel(channels: SupportChannels): string {
+  const { whatsappUrl, telegramUrl } = channels;
+  if (whatsappUrl && telegramUrl) return "Chat with us";
+  if (telegramUrl) return "Telegram";
+  if (whatsappUrl) return "WhatsApp";
+  return "Contact";
+}
+
+/** Open the only available channel, or return `"chooser"` when both exist. */
+export function resolveSupportAction(channels: SupportChannels): "whatsapp" | "telegram" | "chooser" | "none" {
+  const { whatsappUrl, telegramUrl } = channels;
+  if (whatsappUrl && telegramUrl) return "chooser";
+  if (telegramUrl) return "telegram";
+  if (whatsappUrl) return "whatsapp";
+  return "none";
+}
+
+export function openSupportChannel(url: string) {
+  if (!url || typeof window === "undefined") return;
+  window.open(url, "_blank", "noopener,noreferrer");
+}

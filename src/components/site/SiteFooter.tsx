@@ -2,15 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { site } from "@/config/site";
 import { Logo } from "@/components/brand/Logo";
 import { usePublicSettings } from "@/hooks/use-public-settings";
-import { buildWhatsAppUrl, defaultWhatsAppMessage, mailtoSupport } from "@/lib/contact-links";
+import { getSupportChannels, mailtoSupport } from "@/lib/contact-links";
 import whatsappIcon from "@/assets/whatsapp.svg";
+import telegramIcon from "@/assets/telegram.png";
 
 export function SiteFooter() {
   const { data: settings } = usePublicSettings();
-  const wa = buildWhatsAppUrl(
-    settings?.whatsappNumber ?? "",
-    defaultWhatsAppMessage(settings)
-  );
+  const channels = getSupportChannels(settings);
 
   return (
     <footer className="border-t border-border/60 mt-6 sm:mt-8">
@@ -34,16 +32,35 @@ export function SiteFooter() {
                 {site.supportEmail}
               </a>
             </li>
-            {wa ? (
+            {channels.whatsappUrl ? (
               <li>
                 <a
-                  href={wa}
+                  href={channels.whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 hover:text-foreground transition-colors story-link"
                 >
                   <img src={whatsappIcon} alt="" className="h-4 w-4 shrink-0" width={16} height={16} />
                   WhatsApp
+                </a>
+              </li>
+            ) : null}
+            {channels.telegramUrl ? (
+              <li>
+                <a
+                  href={channels.telegramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 hover:text-foreground transition-colors story-link"
+                >
+                  <img
+                    src={telegramIcon}
+                    alt=""
+                    className="h-4 w-4 shrink-0 rounded-full object-cover"
+                    width={16}
+                    height={16}
+                  />
+                  Telegram
                 </a>
               </li>
             ) : null}
@@ -69,7 +86,9 @@ function FooterCol({ title, links }: { title: string; links: [string, string][] 
       <ul className="space-y-2 text-base text-secondary">
         {links.map(([label, href]) => (
           <li key={href}>
-            <Link to={href} className="hover:text-foreground transition-colors story-link">{label}</Link>
+            <Link to={href} className="hover:text-foreground transition-colors story-link">
+              {label}
+            </Link>
           </li>
         ))}
       </ul>

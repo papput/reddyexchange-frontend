@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
-import { ArrowRight, ArrowLeft, Copy, CheckCircle2, Loader2, MessageCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, Copy, CheckCircle2, Loader2, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { BuyFlowProgressBar } from "@/components/app/StepIndicator";
 import { usePublicSettings } from "@/hooks/use-public-settings";
+import { SupportChannelChooser } from "@/components/site/SupportContact";
+import {
+  buildTelegramUrl,
+  buildWhatsAppUrl,
+  openSupportChannel,
+  resolveSupportAction,
+} from "@/lib/contact-links";
 import {
   apiConfirmAutoUpi,
   apiAbandonAutoUpiDraft,
@@ -91,10 +98,6 @@ function fmtUsdtAmount(n: number) {
 
 function networkFee(network: Network, fees: { TRC20: number; ERC20: number; BEP20: number }) {
   return network === "ERC20" ? fees.ERC20 : network === "BEP20" ? fees.BEP20 : fees.TRC20;
-}
-
-function whatsappDigitsOnly(raw: string) {
-  return String(raw || "").replace(/\D/g, "");
 }
 
 const MIN_WALLET_CHARS = 20;
@@ -825,6 +828,9 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
               primeExchBalance={auth?.user?.primeExchUsdtBalance ?? null}
               whatsappNumber={whatsappNumber}
               whatsappMessage={whatsappMessage}
+              telegramHandle={settings?.telegramHandle ?? ""}
+              whatsappEnabled={settings?.whatsappEnabled !== false}
+              telegramEnabled={Boolean(settings?.telegramEnabled)}
               upiPayeeName={site.upiPayeeName}
               isAutoUpi={isAutoUpi}
               manualFallbackPay={manualFallbackPay}
@@ -1090,6 +1096,9 @@ function StepWalletAndPay({
   primeExchBalance,
   whatsappNumber,
   whatsappMessage,
+  telegramHandle,
+  whatsappEnabled,
+  telegramEnabled,
   upiPayeeName,
   isAutoUpi,
   manualFallbackPay,
@@ -1111,6 +1120,9 @@ function StepWalletAndPay({
   primeExchBalance: number | null;
   whatsappNumber: string;
   whatsappMessage: string;
+  telegramHandle: string;
+  whatsappEnabled: boolean;
+  telegramEnabled: boolean;
   upiPayeeName: string;
   isAutoUpi: boolean;
   manualFallbackPay: boolean;
@@ -1159,6 +1171,9 @@ function StepWalletAndPay({
         primeExchBalance={primeExchBalance}
         whatsappNumber={whatsappNumber}
         whatsappMessage={whatsappMessage}
+        telegramHandle={telegramHandle}
+        whatsappEnabled={whatsappEnabled}
+        telegramEnabled={telegramEnabled}
         upiPayeeName={upiPayeeName}
         isAutoUpi={isAutoUpi}
         manualFallbackPay={manualFallbackPay}
@@ -1184,6 +1199,9 @@ function PaymentInstructions({
   primeExchBalance,
   whatsappNumber,
   whatsappMessage,
+  telegramHandle,
+  whatsappEnabled,
+  telegramEnabled,
   upiPayeeName,
   isAutoUpi,
   manualFallbackPay,
@@ -1204,6 +1222,9 @@ function PaymentInstructions({
   primeExchBalance: number | null;
   whatsappNumber: string;
   whatsappMessage: string;
+  telegramHandle: string;
+  whatsappEnabled: boolean;
+  telegramEnabled: boolean;
   upiPayeeName: string;
   isAutoUpi: boolean;
   manualFallbackPay: boolean;
@@ -1211,6 +1232,7 @@ function PaymentInstructions({
   gatewayLoading: boolean;
   onStartAutoUpi: () => void;
 }) {
+  const [chatChooserOpen, setChatChooserOpen] = useState(false);
   const upiUri = `upi://pay?pa=${encodeURIComponent(manualUpi)}&pn=${encodeURIComponent(upiPayeeName)}&am=${inr}&cu=INR`;
   const copy = (s: string) => {
     navigator.clipboard.writeText(s);
@@ -1222,7 +1244,7 @@ function PaymentInstructions({
   const ifsc = bank.ifsc || "—";
   const bankName = bank.bankName || "—";
 
-  const bankImpsWhatsappBody = buildBuyBankImpsWhatsappMessage({
+  const bankImpsChatBody = buildBuyBankImpsWhatsappMessage({
     inr,
     usdt,
     network,
@@ -1234,9 +1256,24 @@ function PaymentInstructions({
   const standardWalletMissing =
     buyAsset === "standard" && buyBankImpsInstructions === "whatsapp" && walletAddress.trim().length < MIN_WALLET_CHARS;
   const pexBankWhatsappExtra = buyAsset === "pex" && buyBankImpsInstructions === "whatsapp";
-  const waDigits = whatsappDigitsOnly(whatsappNumber);
-  const whatsappHref =
-    waDigits.length >= 10 ? `https://wa.me/${waDigits}?text=${encodeURIComponent(bankImpsWhatsappBody)}` : "";
+  const whatsappHref = whatsappEnabled ? buildWhatsAppUrl(whatsappNumber, bankImpsChatBody) : "";
+  const telegramHref = telegramEnabled ? buildTelegramUrl(telegramHandle, bankImpsChatBody) : "";
+  const orderChannels = {
+    whatsappEnabled: Boolean(whatsappHref),
+    telegramEnabled: Boolean(telegramHref),
+    whatsappUrl: whatsappHref,
+    telegramUrl: telegramHref,
+    telHref: "",
+  };
+  const chatAction = resolveSupportAction(orderChannels);
+  const chatLabel =
+    chatAction === "chooser"
+      ? "Open chat"
+      : chatAction === "telegram"
+        ? "Open Telegram"
+        : chatAction === "whatsapp"
+          ? "Open WhatsApp"
+          : "";
 
   if (payMethod === "upi" && isAutoUpi && !manualFallbackPay) {
     return (
@@ -1290,16 +1327,30 @@ function PaymentInstructions({
   }
 
   if (payMethod === "bank" && buyBankImpsInstructions === "whatsapp") {
+    const openChat = () => {
+      if (chatAction === "chooser") setChatChooserOpen(true);
+      else if (chatAction === "telegram") openSupportChannel(orderChannels.telegramUrl);
+      else if (chatAction === "whatsapp") openSupportChannel(orderChannels.whatsappUrl);
+    };
+    const channelWord =
+      chatAction === "chooser"
+        ? "WhatsApp / Telegram"
+        : chatAction === "telegram"
+          ? "Telegram"
+          : chatAction === "whatsapp"
+            ? "WhatsApp"
+            : "chat";
+
     return (
       <div className="rounded-2xl bg-surface p-5 border border-emerald-500/25 space-y-4 text-sm">
         <div className="flex gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-            <MessageCircle className="h-5 w-5" />
+            {chatAction === "telegram" ? <Send className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
           </div>
           <div>
-            <p className="font-semibold text-foreground">Bank IMPS via WhatsApp</p>
+            <p className="font-semibold text-foreground">Bank IMPS via {channelWord}</p>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Open WhatsApp with your order details. After paying, continue to enter UTR and upload proof.
+              Open {channelWord} with your order details. After paying, continue to enter UTR and upload proof.
               {buyAsset === "standard"
                 ? standardWalletMissing
                   ? ` The message includes your ${site.coinSymbol} balance and ${site.standardUsdtLabel} wallet lines.`
@@ -1312,7 +1363,7 @@ function PaymentInstructions({
         </div>
         {standardWalletMissing && (
           <p className="text-xs text-amber-800 dark:text-amber-200 rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 leading-relaxed">
-            Add your {network} address on the step above, or complete wallet lines in the WhatsApp message.
+            Add your {network} address on the step above, or complete wallet lines in the chat message.
           </p>
         )}
         {pexBankWhatsappExtra && (
@@ -1320,32 +1371,33 @@ function PaymentInstructions({
             {site.coinName} adds to your <strong>TRC20 in-app balance</strong> on {site.siteName}.
           </p>
         )}
-        {waDigits.length < 10 && (
+        {chatAction === "none" && (
           <p className="text-xs text-amber-700 dark:text-amber-300 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-            WhatsApp number may be missing — you can still copy the message.
+            Chat is currently unavailable — copy the message and send it to support.
           </p>
         )}
         <div className="rounded-xl border border-border/80 bg-muted/20 dark:bg-surface/80 p-3 max-h-40 overflow-y-auto">
           <pre className="text-[11px] sm:text-xs font-mono whitespace-pre-wrap break-words text-foreground/90">
-            {bankImpsWhatsappBody}
+            {bankImpsChatBody}
           </pre>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 cta-shadow-zone">
-          {whatsappHref ? (
+          {chatAction !== "none" ? (
             <Button
               type="button"
               className="flex-1 h-11 gradient-primary border-0 hover-glow gap-2"
-              onClick={() => window.open(whatsappHref, "_blank", "noopener,noreferrer")}
+              onClick={openChat}
             >
-              <MessageCircle className="h-4 w-4" /> Open WhatsApp
+              {chatAction === "telegram" ? <Send className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
+              {chatLabel}
             </Button>
           ) : null}
           <Button
             type="button"
             variant="outline"
-            className={`glass border-border/60 h-11 ${whatsappHref ? "sm:flex-1" : "w-full"}`}
+            className={`glass border-border/60 h-11 ${chatAction !== "none" ? "sm:flex-1" : "w-full"}`}
             onClick={() => {
-              navigator.clipboard.writeText(bankImpsWhatsappBody);
+              navigator.clipboard.writeText(bankImpsChatBody);
               toast.success("Message copied");
             }}
           >
@@ -1357,14 +1409,21 @@ function PaymentInstructions({
           <Row
             label={`${site.coinSymbol} in-app balance`}
             value={
-              typeof primeExchBalance === "number" && Number.isFinite(primeExchBalance)
-                ? (
-                    <FormattedUsdt value={primeExchBalance} size="xs" />
-                  )
-                : "Check in app"
+              typeof primeExchBalance === "number" && Number.isFinite(primeExchBalance) ? (
+                <FormattedUsdt value={primeExchBalance} size="xs" />
+              ) : (
+                "Check in app"
+              )
             }
           />
         )}
+        <SupportChannelChooser
+          open={chatChooserOpen}
+          onOpenChange={setChatChooserOpen}
+          channels={orderChannels}
+          title="Send order details"
+          description="Choose WhatsApp or Telegram to continue."
+        />
       </div>
     );
   }

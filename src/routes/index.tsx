@@ -23,8 +23,15 @@ import { cn } from "@/lib/utils";
 import { useAuth, type Network, type PayMethod } from "@/lib/store";
 import { usePublicSettings } from "@/hooks/use-public-settings";
 import { site } from "@/config/site";
-import { buildWhatsAppUrl, defaultWhatsAppMessage } from "@/lib/contact-links";
-import whatsappIcon from "@/assets/whatsapp.svg";
+import {
+  getSupportChannels,
+  openSupportChannel,
+  resolveSupportAction,
+} from "@/lib/contact-links";
+import {
+  SupportChannelChooser,
+  SupportChannelIcons,
+} from "@/components/site/SupportContact";
 import { InrPerUsdtRate, UsdtWord } from "@/components/app/UsdtMark";
 import {
   BuyFlowStepChoosePayAndToken,
@@ -47,11 +54,12 @@ export const Route = createFileRoute("/")({
 function Landing() {
   const { data: settings } = usePublicSettings();
   const rate = settings?.price ?? 91;
-  const wa = buildWhatsAppUrl(settings?.whatsappNumber ?? "", defaultWhatsAppMessage(settings));
-  const orderDelayWa = buildWhatsAppUrl(
-    settings?.whatsappNumber ?? "",
-    "Hi, my order has not been delivered within 15 minutes. Please help.",
-  );
+  const delayMsg = "Hi, my order has not been delivered within 15 minutes. Please help.";
+  const bannerChannels = getSupportChannels(settings, {
+    whatsappMessage: delayMsg,
+    telegramMessage: delayMsg,
+  });
+  const heroChannels = getSupportChannels(settings);
 
   useEffect(() => {
     const hash = window.location.hash.replace(/^#/, "");
@@ -64,10 +72,10 @@ function Landing() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <HomeTopBanner whatsappUrl={orderDelayWa || wa} />
+      <HomeTopBanner channels={bannerChannels} />
       <SiteHeader />
       <main className="flex-1">
-        <Hero rate={rate} whatsappUrl={wa} />
+        <Hero rate={rate} channels={heroChannels} />
         <LiveTransactionsFeed />
         <Steps />
         <Trust />
@@ -114,7 +122,30 @@ function LiveRateBadge({ rate, variant }: { rate: number; variant: "mobile" | "d
   );
 }
 
-function Hero({ rate, whatsappUrl }: { rate: number; whatsappUrl: string }) {
+function Hero({
+  rate,
+  channels,
+}: {
+  rate: number;
+  channels: ReturnType<typeof getSupportChannels>;
+}) {
+  const [chooserOpen, setChooserOpen] = useState(false);
+  const action = resolveSupportAction(channels);
+  const label =
+    action === "chooser"
+      ? "Chat with us"
+      : action === "telegram"
+        ? "Telegram"
+        : action === "whatsapp"
+          ? "WhatsApp"
+          : "";
+
+  const onChat = () => {
+    if (action === "chooser") setChooserOpen(true);
+    else if (action === "telegram") openSupportChannel(channels.telegramUrl);
+    else if (action === "whatsapp") openSupportChannel(channels.whatsappUrl);
+  };
+
   return (
     <section className="relative isolate scroll-mt-[4.5rem] sm:scroll-mt-20" id="exchange">
       <div className="absolute inset-0 -z-10">
@@ -162,16 +193,15 @@ function Hero({ rate, whatsappUrl }: { rate: number; whatsappUrl: string }) {
               <Link to="/contact" className="text-accent hover:underline">
                 Contact us
               </Link>
-              {whatsappUrl ? (
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {action !== "none" ? (
+                <button
+                  type="button"
+                  onClick={onChat}
                   className="inline-flex items-center gap-1 text-emerald-400 hover:underline"
                 >
-                  <img src={whatsappIcon} alt="" className="h-3.5 w-3.5" width={14} height={14} />
-                  WhatsApp
-                </a>
+                  <SupportChannelIcons channels={channels} size={14} />
+                  {label}
+                </button>
               ) : null}
             </div>
           </div>
@@ -181,6 +211,7 @@ function Hero({ rate, whatsappUrl }: { rate: number; whatsappUrl: string }) {
           </div>
         </div>
       </div>
+      <SupportChannelChooser open={chooserOpen} onOpenChange={setChooserOpen} channels={channels} />
     </section>
   );
 }

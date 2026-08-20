@@ -28,8 +28,10 @@ import { site } from "@/config/site";
 import { FormattedUsdt, UsdtWord } from "@/components/app/UsdtMark";
 import { Link } from "@tanstack/react-router";
 import { usePublicSettings } from "@/hooks/use-public-settings";
-import { buildWhatsAppUrl, defaultWhatsAppMessage } from "@/lib/contact-links";
-import whatsappIcon from "@/assets/whatsapp.svg";
+import {
+  SupportChannelIcons,
+  useSupportContactAction,
+} from "@/components/site/SupportContact";
 
 export const Route = createFileRoute("/app/profile")({
   head: () => ({ meta: [{ title: `Profile — ${site.siteName}` }] }),
@@ -40,10 +42,7 @@ function ProfilePage() {
   const auth = useAuth();
   const nav = useNavigate();
   const { data: settings } = usePublicSettings();
-  const wa = buildWhatsAppUrl(
-    settings?.whatsappNumber ?? "",
-    defaultWhatsAppMessage(settings),
-  );
+  const { channels, action, trigger, chooser, label } = useSupportContactAction(settings);
   const [changePwdOpen, setChangePwdOpen] = useState(false);
   if (!auth) return null;
   const u = auth.user;
@@ -174,22 +173,27 @@ function ProfilePage() {
       <div className="space-y-2">
         <h2 className="text-sm font-semibold text-secondary px-1">Support</h2>
         <div className="glass rounded-2xl divide-y divide-border/60 overflow-hidden border border-border/50">
-          {wa ? (
-            <a
-              href={wa}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-4 hover:bg-surface/60 transition"
+          {action !== "none" ? (
+            <button
+              type="button"
+              onClick={trigger}
+              className="w-full flex items-center gap-3 p-4 hover:bg-surface/60 transition text-left"
             >
               <div className="h-10 w-10 rounded-xl bg-emerald-500/15 grid place-items-center shrink-0">
-                <img src={whatsappIcon} alt="" className="h-5 w-5" width={20} height={20} />
+                <SupportChannelIcons channels={channels} size={20} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm">WhatsApp support</div>
-                <div className="text-xs text-muted-foreground">Chat with us on WhatsApp</div>
+                <div className="font-medium text-sm">{label} support</div>
+                <div className="text-xs text-muted-foreground">
+                  {action === "chooser"
+                    ? "Choose WhatsApp or Telegram"
+                    : action === "telegram"
+                      ? "Chat with us on Telegram"
+                      : "Chat with us on WhatsApp"}
+                </div>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-            </a>
+            </button>
           ) : null}
           <Link
             to="/contact"
@@ -206,6 +210,8 @@ function ProfilePage() {
           </Link>
         </div>
       </div>
+
+      {chooser}
 
       <Button
         variant="outline"

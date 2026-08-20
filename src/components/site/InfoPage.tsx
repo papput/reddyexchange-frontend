@@ -29,7 +29,7 @@ export function InfoPage({
           <div className="mt-10 space-y-4">
             <h2 className="text-lg font-semibold text-foreground">Need help?</h2>
             <p className="text-sm text-muted-foreground">
-              Reach us via email, WhatsApp, or phone — details are set by your admin.
+              Reach us via the channels enabled by your admin (email, chat, or phone).
             </p>
             <ContactChannels
               settings={settings}

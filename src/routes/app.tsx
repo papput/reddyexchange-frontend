@@ -6,9 +6,11 @@ import { useAuth, useHydrated, logout, refreshProfile } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { usePublicSettings } from "@/hooks/use-public-settings";
-import { buildWhatsAppUrl, defaultWhatsAppMessage } from "@/lib/contact-links";
 import { captureGatewayReturnIfPresent } from "@/lib/buyGateway";
-import whatsappIcon from "@/assets/whatsapp.svg";
+import {
+  SupportChannelIcons,
+  useSupportContactAction,
+} from "@/components/site/SupportContact";
 
 export const Route = createFileRoute("/app")({
   beforeLoad: ({ location }) => {
@@ -24,10 +26,7 @@ function AppLayout() {
   const nav = useNavigate();
   const redirected = useRef(false);
   const { data: settings } = usePublicSettings();
-  const wa = buildWhatsAppUrl(
-    settings?.whatsappNumber ?? "",
-    defaultWhatsAppMessage(settings)
-  );
+  const { channels, action, trigger, chooser, label } = useSupportContactAction(settings);
 
   useEffect(() => {
     if (!hydrated || !auth?.token) return;
@@ -52,11 +51,15 @@ function AppLayout() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Logo to="/app" />
           <div className="flex items-center gap-2">
-            {wa ? (
-              <Button asChild size="sm" variant="ghost" className="text-emerald-400 hover:text-emerald-300 px-2">
-                <a href={wa} target="_blank" rel="noopener noreferrer" title="WhatsApp support">
-                  <img src={whatsappIcon} alt="" className="h-5 w-5" width={20} height={20} />
-                </a>
+            {action !== "none" ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-emerald-400 hover:text-emerald-300 px-2 gap-1.5"
+                onClick={trigger}
+                title={label}
+              >
+                <SupportChannelIcons channels={channels} size={20} />
               </Button>
             ) : (
               <Button asChild size="sm" variant="ghost" className="text-secondary hidden sm:inline-flex">
@@ -87,6 +90,7 @@ function AppLayout() {
         </main>
       </div>
       <BottomNav />
+      {chooser}
     </div>
   );
 }

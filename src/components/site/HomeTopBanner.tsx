@@ -1,16 +1,31 @@
 import { Megaphone } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
+import type { SupportChannels } from "@/lib/contact-links";
+import { openSupportChannel, resolveSupportAction } from "@/lib/contact-links";
+import { SupportChannelChooser } from "@/components/site/SupportContact";
 
 type HomeTopBannerProps = {
-  whatsappUrl?: string;
+  channels: SupportChannels;
 };
 
-const BANNER_TEXT = "Contact Us On Whatsapp If Your Order Not Delivered Within 15min";
+function bannerChannelWord(channels: SupportChannels): string {
+  const { whatsappUrl, telegramUrl } = channels;
+  if (whatsappUrl && telegramUrl) return "WhatsApp / Telegram";
+  if (telegramUrl) return "Telegram";
+  if (whatsappUrl) return "WhatsApp";
+  return "support";
+}
 
 /** Matches exchange card / glass panels — one lightweight border token */
 const liteBorder = "border border-border/50";
 
-export function HomeTopBanner({ whatsappUrl }: HomeTopBannerProps) {
+export function HomeTopBanner({ channels }: HomeTopBannerProps) {
+  const [chooserOpen, setChooserOpen] = useState(false);
+  const action = resolveSupportAction(channels);
+  const channelWord = bannerChannelWord(channels);
+  const bannerText = `Contact Us On ${channelWord} If Your Order Not Delivered Within 15min`;
+
   const className = cn(
     "w-full min-w-0",
     liteBorder,
@@ -29,25 +44,35 @@ export function HomeTopBanner({ whatsappUrl }: HomeTopBannerProps) {
         aria-hidden
       />
       <p className="text-sm sm:text-base font-semibold leading-snug text-center text-balance max-w-3xl">
-        Contact Us On{" "}
-        <span className="text-accent font-bold">Whatsapp</span> If Your Order Not Delivered Within 15min
+        Contact Us On <span className="text-accent font-bold">{channelWord}</span> If Your Order Not
+        Delivered Within 15min
       </p>
     </>
   );
 
-  if (whatsappUrl) {
-    return (
-      <a
-        href={whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={cn(className, "hover:bg-surface transition-colors")}
-        aria-label={`${BANNER_TEXT} — open WhatsApp`}
-      >
-        {inner}
-      </a>
-    );
+  if (action === "none") {
+    return <div className={className}>{inner}</div>;
   }
 
-  return <div className={className}>{inner}</div>;
+  const onActivate = () => {
+    if (action === "chooser") {
+      setChooserOpen(true);
+      return;
+    }
+    openSupportChannel(action === "telegram" ? channels.telegramUrl : channels.whatsappUrl);
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onActivate}
+        className={cn(className, "hover:bg-surface transition-colors cursor-pointer")}
+        aria-label={bannerText}
+      >
+        {inner}
+      </button>
+      <SupportChannelChooser open={chooserOpen} onOpenChange={setChooserOpen} channels={channels} />
+    </>
+  );
 }

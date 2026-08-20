@@ -3,10 +3,13 @@ import { BadgeCheck, Shield, Sparkles, TrendingUp, Zap } from "lucide-react";
 import { Logo, HeroBrandWordmark } from "@/components/brand/Logo";
 import { InrPerUsdtRate } from "@/components/app/UsdtMark";
 import { usePublicSettings } from "@/hooks/use-public-settings";
-import { buildWhatsAppUrl, defaultWhatsAppMessage, mailtoSupport } from "@/lib/contact-links";
+import { mailtoSupport } from "@/lib/contact-links";
 import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
-import whatsappIcon from "@/assets/whatsapp.svg";
+import {
+  SupportChannelIcons,
+  useSupportContactAction,
+} from "@/components/site/SupportContact";
 
 const TRUST_ITEMS = [
   {
@@ -41,7 +44,7 @@ export function AuthShell({
 }) {
   const { data: settings } = usePublicSettings();
   const rate = settings?.price ?? 91;
-  const wa = buildWhatsAppUrl(settings?.whatsappNumber ?? "", defaultWhatsAppMessage(settings));
+  const { channels, action, trigger, chooser, label } = useSupportContactAction(settings);
 
   const titleNode =
     variant === "register" ? (
@@ -176,16 +179,15 @@ export function AuthShell({
         <div className="container mx-auto px-4 h-14 sm:h-16 flex items-center justify-between gap-4">
           <Logo />
           <nav className="flex items-center gap-0.5 sm:gap-1 text-sm">
-            {wa ? (
-              <a
-                href={wa}
-                target="_blank"
-                rel="noopener noreferrer"
+            {action !== "none" ? (
+              <button
+                type="button"
+                onClick={trigger}
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-emerald-400 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/20 transition-all"
               >
-                <img src={whatsappIcon} alt="" className="h-4 w-4" width={16} height={16} />
-                WhatsApp
-              </a>
+                <SupportChannelIcons channels={channels} size={16} />
+                {label}
+              </button>
             ) : null}
             <a
               href={mailtoSupport()}
@@ -231,6 +233,7 @@ export function AuthShell({
           )}
         </div>
       </main>
+      {chooser}
     </div>
   );
 }
