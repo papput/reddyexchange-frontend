@@ -410,6 +410,7 @@ export async function apiGetAutoUpiDraft(orderId: string) {
       provider: string;
       cowpayPayment: boolean;
       silkpayPayment: boolean;
+      lgpayPayment?: boolean;
       webhookUtr: string;
       amountINR: number;
       usdtAmount?: number;
