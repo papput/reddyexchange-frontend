@@ -137,6 +137,9 @@ api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  if (typeof window !== "undefined" && config.headers) {
+    config.headers["X-Frontend-Origin"] = window.location.origin;
+  }
   return config;
 });
 
