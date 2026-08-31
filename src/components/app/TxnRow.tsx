@@ -53,14 +53,14 @@ export function TxnRow({ txn, variant = "default" }: { txn: Txn; variant?: "defa
             isBuy
               ? "bg-gradient-to-br from-accent/25 to-accent/5 border-accent/20"
               : isWithdrawal
-                ? "bg-gradient-to-br from-violet-500/25 to-violet-500/5 border-violet-500/20"
+                ? "bg-gradient-to-br from-primary/25 to-primary/5 border-primary/20"
                 : "bg-gradient-to-br from-primary/25 to-primary/5 border-primary/20",
           )}
         >
           {isBuy ? (
             <ArrowDownToLine className="h-4.5 w-4.5 text-accent" />
           ) : isWithdrawal ? (
-            <Wallet className="h-4.5 w-4.5 text-violet-400" />
+            <Wallet className="h-4.5 w-4.5 text-primary" />
           ) : (
             <ArrowUpFromLine className="h-4.5 w-4.5 text-primary-foreground" />
           )}

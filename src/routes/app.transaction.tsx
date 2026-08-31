@@ -369,7 +369,7 @@ function WithdrawalDetail({ kind, d }: { kind: "withdrawal"; d: Record<string, u
 
   return (
     <>
-      <div className="rounded-2xl border border-border/70 bg-gradient-to-br from-violet-500/10 via-surface/80 to-surface p-5 sm:p-6">
+      <div className="rounded-2xl border border-border/70 bg-gradient-to-br from-primary/10 via-surface/80 to-surface p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">

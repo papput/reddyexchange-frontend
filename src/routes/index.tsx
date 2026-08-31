@@ -4,19 +4,19 @@ import {
   ArrowRight,
   Shield,
   Zap,
-  BadgeCheck,
   UserPlus,
   Wallet,
   CreditCard,
   CheckCircle2,
-  TrendingUp,
   Sparkles,
+  Clock,
+  MapPin,
   type LucideIcon,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { HomeTopBanner } from "@/components/site/HomeTopBanner";
+import { SitePageLayout } from "@/components/site/SitePageLayout";
 import { LiveTransactionsFeed } from "@/components/site/LiveTransactionsFeed";
-import { CasinoStatValue } from "@/components/site/CasinoStatValue";
+import { HomeReviewsSection } from "@/components/site/HomeReviewsSection";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -71,52 +71,45 @@ function Landing() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <HomeTopBanner channels={bannerChannels} />
-      <SiteHeader />
+    <SitePageLayout>
+      <SiteHeader announcementChannels={bannerChannels} />
       <main className="flex-1">
         <Hero rate={rate} channels={heroChannels} />
         <LiveTransactionsFeed />
+        <HomeReviewsSection />
         <Steps />
-        <Trust />
+        <WhyChoose />
       </main>
       <SiteFooter />
-    </div>
+    </SitePageLayout>
   );
 }
 
 function LiveRateBadge({ rate, variant }: { rate: number; variant: "mobile" | "desktop" }) {
   const isMobile = variant === "mobile";
   return (
-    <div className={isMobile ? "lg:hidden w-full mb-2 sm:mb-3" : "hidden lg:flex w-full max-w-md mb-2"}>
-      <div className="relative w-full min-w-0">
-        <span
-          className="live-rate-halo-bg pointer-events-none absolute inset-0 -z-10 rounded-[1.25rem] sm:rounded-[1.35rem] blur-xl animate-live-rate-halo"
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "relative w-full min-w-0 flex flex-nowrap items-center whitespace-nowrap rounded-[1.25rem] sm:rounded-[1.35rem] glass",
-            "animate-sell-price-glow animate-live-rate-bounce",
-            isMobile
-              ? "justify-between gap-2 px-3.5 py-2.5 text-sm font-semibold shadow-[0_0_22px_-6px] shadow-primary/35"
-              : "justify-center gap-3 px-6 py-3 text-base lg:text-lg font-bold shadow-[0_0_36px_-4px] shadow-primary/50",
-          )}
-        >
-          <span className="inline-flex min-w-0 items-center gap-2">
-            <Sparkles
-              className={cn("text-accent shrink-0", isMobile ? "h-4 w-4" : "h-5 w-5 lg:h-6 lg:w-6")}
-            />
-            <span className="text-secondary truncate">Live rate today</span>
+    <div className={isMobile ? "lg:hidden w-full mb-2 sm:mb-3" : "hidden lg:flex w-full max-w-md mb-3"}>
+      <div
+        className={cn(
+          "relative w-full min-w-0 flex flex-nowrap items-center whitespace-nowrap rounded-xl",
+          "border-2 border-primary/30 bg-primary/5 px-3 py-2.5 sm:px-4 sm:py-3",
+          "shadow-inner shadow-primary/5",
+          isMobile ? "justify-between gap-2 text-sm font-semibold" : "justify-center gap-3 text-base font-bold",
+        )}
+      >
+        <span className="inline-flex min-w-0 items-center gap-2">
+          <Sparkles className={cn("text-primary shrink-0", isMobile ? "h-4 w-4" : "h-5 w-5")} />
+          <span className="text-muted-foreground truncate uppercase text-[10px] sm:text-xs tracking-wider font-bold">
+            Live market rate
           </span>
-          <span className="text-foreground shrink-0 pl-2">
-            <InrPerUsdtRate
-              inr={rate}
-              size={isMobile ? "xs" : "sm"}
-              className="flex-nowrap whitespace-nowrap"
-            />
-          </span>
-        </div>
+        </span>
+        <span className="text-foreground shrink-0">
+          <InrPerUsdtRate
+            inr={rate}
+            size={isMobile ? "xs" : "sm"}
+            className="flex-nowrap whitespace-nowrap"
+          />
+        </span>
       </div>
     </div>
   );
@@ -147,28 +140,30 @@ function Hero({
   };
 
   return (
-    <section className="relative isolate scroll-mt-[4.5rem] sm:scroll-mt-20" id="exchange">
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 grid-bg opacity-40" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full blur-3xl opacity-30 gradient-primary" />
+    <section className="relative isolate scroll-mt-24" id="exchange">
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/8 rounded-full blur-[120px]" />
+        <div className="absolute inset-0 grid-bg opacity-30" />
       </div>
-      <div className="container mx-auto px-3 sm:px-4 pt-3 sm:pt-4 lg:pt-5 pb-5 sm:pb-8 lg:pb-10">
-        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-start lg:items-center">
-          <div className="order-2 lg:order-1 space-y-3 sm:space-y-4 animate-fade-up">
+      <div className="container mx-auto px-3 sm:px-4 pt-2 sm:pt-4 pb-5 sm:pb-8 lg:pb-10 max-w-6xl">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-10 items-start lg:items-center">
+          <div className="order-2 lg:order-1 space-y-4 animate-fade-up">
             <LiveRateBadge rate={rate} variant="desktop" />
-            <h1 className="hidden md:block text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
-              fast & Secure{" "}
-              <span className="gradient-text">currency Exchange</span>
+            <h1 className="hidden md:block font-display text-4xl sm:text-5xl lg:text-[3.25rem] font-bold tracking-tight leading-[1.05]">
+              <span className="gradient-text">{site.siteName} Exchange</span>
+              <span className="block text-foreground mt-1 text-3xl sm:text-4xl lg:text-5xl">
+                Fast & secure currency exchange
+              </span>
             </h1>
-            <p className="hidden md:block text-lg text-secondary max-w-xl">
-              Fast · Secure · Trusted. The premium gateway for digital assets — built for speed,
-              designed for trust.
+            <p className="hidden md:block text-base lg:text-lg text-muted-foreground max-w-xl">
+              The most reliable platform to buy USDT and pay directly from your bank account using
+              INR — UPI, IMPS, and multi-chain delivery.
             </p>
             <div className="hidden md:flex flex-wrap gap-3 cta-shadow-zone">
               <Button
                 asChild
                 size="lg"
-                className="gradient-primary border-0 hover-glow text-base h-12 px-7"
+                className="gradient-primary border-0 hover-glow text-base h-12 px-7 font-semibold"
               >
                 <Link to="/login">
                   Login <ArrowRight className="ml-1 h-4 w-4" />
@@ -178,26 +173,26 @@ function Hero({
                 asChild
                 variant="outline"
                 size="lg"
-                className="h-12 px-7 glass border-border/60"
+                className="h-12 px-7 glass-card border-border/60 hover:border-primary/30"
               >
                 <Link to="/register">Sign up</Link>
               </Button>
             </div>
-            <div className="hidden md:flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-xs text-muted-foreground">
+            <div className="hidden md:flex flex-wrap items-center gap-x-5 gap-y-2 pt-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Shield className="h-4 w-4 text-success" /> Bank-grade security
               </span>
               <span className="flex items-center gap-1.5">
-                <Zap className="h-4 w-4 text-accent" /> Instant settlement
+                <Zap className="h-4 w-4 text-primary" /> Instant settlement
               </span>
-              <Link to="/contact" className="text-accent hover:underline">
+              <Link to="/contact" className="text-primary hover:underline">
                 Contact us
               </Link>
               {action !== "none" ? (
                 <button
                   type="button"
                   onClick={onChat}
-                  className="inline-flex items-center gap-1 text-emerald-400 hover:underline"
+                  className="inline-flex items-center gap-1 text-primary hover:underline"
                 >
                   <SupportChannelIcons channels={channels} size={14} />
                   {label}
@@ -235,18 +230,18 @@ function LandingBuyStepCard({ rate }: { rate: number }) {
   };
 
   return (
-    <div className="relative z-0 w-full min-w-0 max-w-full overflow-visible pb-4 sm:pb-6">
+    <div className="relative z-0 w-full min-w-0 max-w-full overflow-visible pb-2 sm:pb-4">
       <BuyFlowStepChoosePayAndToken
-          payMethod={payMethod}
-          setPayMethod={setPayMethod}
-          network={network}
-          setNetwork={setNetwork}
-          buyAsset={buyAsset}
-          setBuyAsset={setBuyAsset}
-          fees={fees}
-          price={price}
-          minInr={minInr}
-          onStartExchange={goExchange}
+        payMethod={payMethod}
+        setPayMethod={setPayMethod}
+        network={network}
+        setNetwork={setNetwork}
+        buyAsset={buyAsset}
+        setBuyAsset={setBuyAsset}
+        fees={fees}
+        price={price}
+        minInr={minInr}
+        onStartExchange={goExchange}
       />
     </div>
   );
@@ -282,30 +277,39 @@ function Steps() {
     },
   ];
   return (
-    <section className="container mx-auto px-4 pt-6 sm:pt-10 pb-6 sm:pb-8 scroll-mt-[4.5rem] sm:scroll-mt-20" id="deposit">
-      <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
-        <div className="text-xs uppercase tracking-widest text-accent mb-3">How it works</div>
-        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+    <section
+      className="container mx-auto px-3 sm:px-4 pt-2 sm:pt-8 pb-4 sm:pb-8 scroll-mt-24 max-w-6xl"
+      id="deposit"
+    >
+      <div className="text-center max-w-2xl mx-auto mb-3 sm:mb-8">
+        <div className="text-[10px] sm:text-xs uppercase tracking-widest text-primary font-bold mb-1 sm:mb-2">
+          How it works
+        </div>
+        <h2 className="font-display text-lg sm:text-3xl font-bold tracking-tight">
           Four steps. Done in minutes.
         </h2>
-        <p className="text-secondary mt-3">
+        <p className="hidden sm:block text-muted-foreground mt-2 text-sm sm:text-base">
           A streamlined flow built for first-time and power users alike.
         </p>
       </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         {items.map((it, i) => (
           <div
             key={it.title}
-            className="glass rounded-2xl p-6 hover-lift hover-lift-safe relative group"
+            className="glass-card p-3 sm:p-6 hover:border-primary/30 transition-all duration-200 relative group"
           >
-            <div className="absolute top-3 right-4 text-5xl font-bold text-foreground/5">
+            <div className="absolute top-2 right-2 sm:top-3 sm:right-4 text-2xl sm:text-4xl font-bold text-foreground/5 font-display">
               {i + 1}
             </div>
-            <div className="h-11 w-11 rounded-xl gradient-primary grid place-items-center mb-4 group-hover:scale-105 transition-transform">
-              <it.icon className="h-5 w-5 text-white" />
+            <div className="h-8 w-8 sm:h-11 sm:w-11 rounded-lg sm:rounded-xl bg-primary/10 border border-primary/25 grid place-items-center mb-2 sm:mb-4 group-hover:scale-105 transition-transform">
+              <it.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
-            <h3 className="font-semibold mb-1">{it.title}</h3>
-            <p className="text-sm text-secondary">{it.desc}</p>
+            <h3 className="font-semibold mb-0.5 sm:mb-1 text-foreground text-xs sm:text-base leading-tight">
+              {it.title}
+            </h3>
+            <p className="text-[11px] sm:text-sm text-muted-foreground leading-snug line-clamp-3 sm:line-clamp-none">
+              {it.desc}
+            </p>
           </div>
         ))}
       </div>
@@ -313,46 +317,61 @@ function Steps() {
   );
 }
 
-function Trust() {
-  const stats = [
-    { icon: Shield, label: "Bank-grade security", value: "256-bit" },
-    { icon: Zap, label: "Average settlement", value: "< 5 min" },
-    { icon: BadgeCheck, label: "Verified users", value: "10,000+" },
-    { icon: TrendingUp, label: "Volume processed", value: "17 + Cr" },
+function WhyChoose() {
+  const items: { icon: LucideIcon; title: string; desc: string }[] = [
+    {
+      icon: Zap,
+      title: "Instant Exchange",
+      desc: "Convert INR to USDT in minutes with real-time rates.",
+    },
+    {
+      icon: Shield,
+      title: "Secure & Trusted",
+      desc: "Bank-grade encryption and 2FA protection for every transaction.",
+    },
+    {
+      icon: Clock,
+      title: "24/7 Available",
+      desc: "Trade anytime, anywhere with our always-on platform.",
+    },
+    {
+      icon: MapPin,
+      title: "Pan-India Coverage",
+      desc: "Supports all major Indian banks for seamless payouts.",
+    },
   ];
+
   return (
-    <section className="container mx-auto px-4 pt-6 sm:pt-8 pb-6 sm:pb-8 scroll-mt-[4.5rem] sm:scroll-mt-20" id="reviews">
-      <div className="glass-strong rounded-3xl p-6 sm:p-8">
-        <div className="text-center mb-6 sm:mb-7">
-          <h2 className="text-[1.65rem] sm:text-3xl font-bold leading-tight">
-            Trusted by 10,000+ users across India
-          </h2>
-          <p className="text-secondary mt-2 text-base sm:text-lg">
-            Built on a foundation of speed, security, and reliability.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              className="rounded-2xl bg-surface p-4 sm:p-5 text-center hover-lift border border-border/40"
-            >
-              <div className="h-10 w-10 mx-auto rounded-xl bg-primary/10 grid place-items-center mb-3">
-                <s.icon className="h-5 w-5 text-accent" />
-              </div>
-              <CasinoStatValue value={s.value} />
-              <div className="text-sm text-muted-foreground mt-1">{s.label}</div>
-            </div>
-          ))}
-        </div>
-        <div className="text-center mt-6 sm:mt-7">
-          <Link
-            to="/reviews"
-            className="inline-flex items-center gap-1.5 text-sm sm:text-base font-semibold text-accent hover:underline"
+    <section
+      className="container mx-auto px-3 sm:px-4 pt-2 sm:pt-8 pb-4 sm:pb-10 scroll-mt-24 max-w-6xl"
+      id="why-choose"
+    >
+      <div className="text-center max-w-2xl mx-auto mb-3 sm:mb-8">
+        <h2 className="font-display text-lg sm:text-3xl font-bold tracking-tight text-foreground">
+          Why Choose <span className="gradient-text">{site.siteName}</span>?
+        </h2>
+        <p className="text-xs sm:text-base text-muted-foreground mt-1.5 sm:mt-2">
+          Trade with the platform trusted by thousands
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+        {items.map((item) => (
+          <article
+            key={item.title}
+            className="site-card rounded-xl sm:rounded-2xl p-3 sm:p-6 hover:border-primary/30 transition-colors group"
           >
-            Read all customer reviews →
-          </Link>
-        </div>
+            <div className="h-8 w-8 sm:h-11 sm:w-11 rounded-lg sm:rounded-xl bg-primary/10 border border-primary/25 grid place-items-center mb-2 sm:mb-4 group-hover:scale-105 transition-transform">
+              <item.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            </div>
+            <h3 className="font-display font-semibold text-foreground text-xs sm:text-lg mb-0.5 sm:mb-1.5 leading-tight">
+              {item.title}
+            </h3>
+            <p className="text-[11px] sm:text-sm text-muted-foreground leading-snug line-clamp-3 sm:line-clamp-none">
+              {item.desc}
+            </p>
+          </article>
+        ))}
       </div>
     </section>
   );

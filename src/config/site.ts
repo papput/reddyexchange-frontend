@@ -1,6 +1,7 @@
 import siteJson from "./site.json";
 
 export type SiteConfig = {
+  siteOrigin: string;
   siteName: string;
   coinName: string;
   coinSymbol: string;

@@ -46,8 +46,9 @@ function AppLayout() {
   const firstName = auth?.user.fullName?.split(" ")[0] ?? "there";
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/70 border-b border-border/60">
+    <div className="site-page">
+      <div className="site-page-glow" aria-hidden />
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/75 border-b border-border/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Logo to="/app" />
           <div className="flex items-center gap-2">

@@ -7,7 +7,7 @@ export function useLiveFeed() {
   return useQuery<LiveFeedData>({
     queryKey: QK,
     queryFn: fetchLiveFeed,
-    refetchInterval: 4_000,
-    staleTime: 2_000,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 }

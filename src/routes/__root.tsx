@@ -6,7 +6,6 @@ import { AuthSessionWatcher } from "@/components/auth/AuthSessionWatcher";
 import { guardRouteAuth } from "@/lib/authGuard";
 import { site } from "@/config/site";
 import appCss from "../styles.css?url";
-import faviconUrl from "@/assets/brand/reddy-exchange-logo.png?url";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -33,24 +32,36 @@ export const Route = createRootRoute({
   beforeLoad: ({ location }) => {
     guardRouteAuth(location.pathname, location.search);
   },
-  head: () => ({
+  head: () => {
+    const ogImage = `${site.siteOrigin}/og-image.png`;
+    return {
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { name: "theme-color", content: "#0B0B0F" },
+      { name: "theme-color", content: "#0b0b0b" },
       { title: `${site.siteName} — Buy & Sell USDT Instantly in India` },
       { name: "description", content: "India's premium gateway for instant USDT exchange. Fast, secure, trusted. UPI & bank transfer supported." },
+      { name: "author", content: site.siteName },
       { property: "og:title", content: `${site.siteName} — Buy & Sell USDT Instantly in India` },
       { property: "og:description", content: "Fast, secure, trusted USDT exchange platform with UPI and bank transfer." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: site.siteOrigin },
+      { property: "og:image", content: ogImage },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:image", content: ogImage },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: faviconUrl, type: "image/png" },
-      { rel: "apple-touch-icon", href: faviconUrl },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap",
+      },
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
-  }),
+  };
+  },
   shellComponent: RootShell,
   component: () => <Outlet />,
   notFoundComponent: NotFoundComponent,

@@ -47,8 +47,8 @@ const QUICK_ACTIONS = [
     description: "Send to TRC20, ERC20, or BEP20 wallets.",
     icon: Wallet,
     glow: "dashboard-action-glow-withdraw",
-    iconWrap: "border-violet-400/30 bg-gradient-to-br from-violet-500/28 via-violet-500/10 to-transparent shadow-[0_0_24px_-8px_rgba(167,139,250,0.3)]",
-    iconClass: "text-violet-300",
+    iconWrap: "border-primary/35 bg-gradient-to-br from-primary/28 via-accent/10 to-transparent shadow-[0_0_24px_-8px_rgba(45,212,191,0.3)]",
+    iconClass: "text-primary",
   },
 ] as const;
 
@@ -100,7 +100,7 @@ function DashboardBalanceLiveRate({ rate, hidden }: { rate: number; hidden: bool
           className={cn(
             "relative flex w-full min-w-0 items-center justify-between gap-2 overflow-hidden rounded-xl",
             "border border-primary/25 bg-white/[0.05] px-3 py-2 backdrop-blur-md",
-            "shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_0_20px_-12px_rgba(139,92,246,0.45)]",
+            "shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_0_20px_-12px_rgba(45,212,191,0.35)]",
           )}
         >
           <span className="inline-flex min-w-0 items-center gap-1.5">

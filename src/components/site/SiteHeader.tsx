@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
-  ChevronDown,
   Headphones,
   LogIn,
   Menu,
@@ -14,9 +13,16 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { HomeTopBanner } from "@/components/site/HomeTopBanner";
 import { Button } from "@/components/ui/button";
+import type { SupportChannels } from "@/lib/contact-links";
 import { useAuth, useHydrated } from "@/lib/store";
 import { cn } from "@/lib/utils";
+
+type SiteHeaderProps = {
+  /** Home announcement strip — stacked above nav inside one fixed header */
+  announcementChannels?: SupportChannels;
+};
 
 type NavItem = {
   label: string;
@@ -144,11 +150,11 @@ function MobileNavPanel({
         aria-label="Mobile"
         className={cn(
           "fixed left-0 right-0 z-[130] w-full max-w-full lg:hidden",
-          "border-b border-primary/25 bg-surface-2/95 backdrop-blur-xl",
+          "border border-primary/25 glass-card",
           "shadow-[0_16px_48px_-12px_rgba(0,0,0,0.55)]",
-          "animate-in fade-in slide-in-from-top-2 duration-200",
+          "animate-in fade-in slide-in-from-top-2 duration-200 mx-3 sm:mx-4 rounded-2xl",
         )}
-        style={{ top: menuTop }}
+        style={{ top: menuTop + 8 }}
       >
         {children}
       </nav>
@@ -157,18 +163,34 @@ function MobileNavPanel({
   );
 }
 
-export function SiteHeader() {
+export function SiteHeader({ announcementChannels }: SiteHeaderProps = {}) {
   const auth = useAuth();
   const hydrated = useHydrated();
   const location = useLocation();
+  const shellRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuTop, setMenuTop] = useState(68);
+  const [shellHeight, setShellHeight] = useState(announcementChannels ? 116 : 72);
+  const hasAnnouncement = Boolean(announcementChannels);
+
+  const syncShellHeight = useCallback(() => {
+    if (shellRef.current) setShellHeight(shellRef.current.offsetHeight);
+  }, []);
 
   const syncMenuTop = useCallback(() => {
     if (!headerRef.current) return;
     setMenuTop(headerRef.current.getBoundingClientRect().bottom);
   }, []);
+
+  useEffect(() => {
+    syncShellHeight();
+    const el = shellRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => syncShellHeight());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [syncShellHeight, hasAnnouncement]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -196,89 +218,108 @@ export function SiteHeader() {
 
   return (
     <>
-      <header
-        ref={headerRef}
+      <div
+        ref={shellRef}
         className={cn(
-          "sticky top-0 isolate overflow-visible",
-          menuOpen ? "z-[140]" : "z-50",
+          "fixed left-0 right-0 z-50",
+          hasAnnouncement ? "top-0" : "top-3 sm:top-4 left-3 sm:left-4 lg:left-28 right-3 sm:right-4 lg:right-28",
+          menuOpen && "z-[140]",
         )}
       >
-        <div className="relative overflow-visible border-b border-white/[0.08] bg-background/65 backdrop-blur-2xl">
+        {hasAnnouncement && announcementChannels ? (
+          <HomeTopBanner channels={announcementChannels} />
+        ) : null}
+
+        <div
+          className={cn(
+            hasAnnouncement && "px-3 sm:px-4 lg:px-28 pt-2 pb-2 bg-background/80 backdrop-blur-md border-b border-border/40",
+          )}
+        >
+          <header ref={headerRef} className="relative isolate overflow-visible rounded-2xl">
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/35 to-transparent"
-            aria-hidden
-          />
+            className={cn(
+              "relative overflow-visible rounded-2xl",
+              "bg-gradient-to-r from-primary/10 via-card/75 to-accent/10",
+              "backdrop-blur-xl border border-primary/20",
+              "shadow-xl shadow-primary/10",
+            )}
+          >
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/35 to-transparent rounded-b-2xl"
+              aria-hidden
+            />
 
-          <div className="container relative mx-auto flex h-[4.25rem] items-center justify-between gap-3 overflow-visible px-4 sm:h-[4.75rem] sm:px-5">
-            <Logo />
+            <div className="relative flex h-[3.75rem] sm:h-16 items-center justify-between gap-3 overflow-visible px-3 sm:px-5">
+              <Logo />
 
-            <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1" aria-label="Main">
-              {NAV_ITEMS.map((item) => (
-                <NavLinkButton key={item.label} item={item} />
-              ))}
-            </nav>
+              <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1" aria-label="Main">
+                {NAV_ITEMS.map((item) => (
+                  <NavLinkButton key={item.label} item={item} />
+                ))}
+              </nav>
 
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              {hydrated && auth ? (
-                <div className="cta-shadow-zone hidden sm:block">
-                  <Button
-                    asChild
-                    className="h-10 border-0 px-4 sm:px-5 text-sm sm:text-base gradient-primary hover-glow"
-                  >
-                    <Link to="/app">Open App</Link>
-                  </Button>
-                </div>
-              ) : (
-                <div className="hidden sm:flex items-center gap-2">
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className="h-10 px-4 text-sm sm:text-base text-secondary hover:text-foreground"
-                  >
-                    <Link to="/login" className="inline-flex items-center gap-1.5">
-                      <LogIn className="h-4 w-4" />
-                      Login
-                    </Link>
-                  </Button>
-                  <div className="cta-shadow-zone">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                {hydrated && auth ? (
+                  <div className="cta-shadow-zone hidden sm:block">
                     <Button
                       asChild
-                      className="h-10 border-0 px-5 text-sm sm:text-base gradient-primary hover-glow"
+                      className="h-9 sm:h-10 border-0 px-4 sm:px-5 text-sm gradient-primary hover-glow"
                     >
-                      <Link to="/register" className="inline-flex items-center gap-1.5">
-                        <UserPlus className="h-4 w-4" />
-                        Sign up
-                      </Link>
+                      <Link to="/app">Open App</Link>
                     </Button>
                   </div>
-                </div>
-              )}
-
-              <Button
-                type="button"
-                variant="outline"
-                aria-expanded={menuOpen}
-                aria-label={menuOpen ? "Close menu" : "Open menu"}
-                onClick={toggleMenu}
-                className={cn(
-                  "lg:hidden relative z-[1] h-10 w-10 sm:h-10 sm:w-auto sm:px-3.5 p-0",
-                  "glass border-primary/25 hover:border-primary/45",
-                  menuOpen && "border-primary/50 bg-primary/10",
-                )}
-              >
-                {menuOpen ? (
-                  <X className="h-5 w-5" />
                 ) : (
-                  <>
-                    <Menu className="h-5 w-5 sm:mr-1.5" />
-                    <ChevronDown className="hidden sm:block h-4 w-4 text-muted-foreground" />
-                  </>
+                  <div className="hidden sm:flex items-center gap-2">
+                    <Button
+                      asChild
+                      variant="ghost"
+                      className="h-9 sm:h-10 px-3 sm:px-4 text-sm text-secondary hover:text-foreground"
+                    >
+                      <Link to="/login" className="inline-flex items-center gap-1.5">
+                        <LogIn className="h-4 w-4" />
+                        Login
+                      </Link>
+                    </Button>
+                    <div className="cta-shadow-zone">
+                      <Button
+                        asChild
+                        className="h-9 sm:h-10 border-0 px-4 sm:px-5 text-sm gradient-primary hover-glow"
+                      >
+                        <Link to="/register" className="inline-flex items-center gap-1.5">
+                          <UserPlus className="h-4 w-4" />
+                          Sign up
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
                 )}
-              </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  aria-expanded={menuOpen}
+                  aria-label={menuOpen ? "Close menu" : "Open menu"}
+                  onClick={toggleMenu}
+                  className={cn(
+                    "lg:hidden relative z-[1] h-9 w-9 sm:h-10 sm:w-10 p-0",
+                    "glass-card border-primary/25 hover:border-primary/45",
+                    menuOpen && "border-primary/50 bg-primary/10",
+                  )}
+                >
+                  {menuOpen ? (
+                    <X className="h-5 w-5" />
+                  ) : (
+                    <Menu className="h-5 w-5" />
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
+        </header>
         </div>
-      </header>
+      </div>
+
+      <div aria-hidden style={{ height: shellHeight }} className={cn(!hasAnnouncement && "min-h-[4.25rem] sm:min-h-[4.75rem]")} />
 
       <MobileNavPanel open={menuOpen} menuTop={menuTop} onClose={closeMenu}>
         <div className="w-full max-w-full px-4 py-3 sm:px-5 space-y-1.5">

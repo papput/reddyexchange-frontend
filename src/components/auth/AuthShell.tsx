@@ -138,7 +138,7 @@ export function AuthShell({
           className="absolute -inset-[1px] rounded-[1.35rem] sm:rounded-[1.65rem] opacity-80 pointer-events-none"
           style={{
             background:
-              "linear-gradient(135deg, color-mix(in oklab, var(--brand-violet) 48%, transparent), color-mix(in oklab, var(--brand-blue) 34%, transparent), color-mix(in oklab, var(--brand-pink) 10%, transparent))",
+              "linear-gradient(135deg, color-mix(in oklab, var(--primary) 48%, transparent), color-mix(in oklab, var(--brand-blue) 34%, transparent), color-mix(in oklab, var(--accent) 12%, transparent))",
           }}
           aria-hidden
         />
@@ -167,7 +167,8 @@ export function AuthShell({
   );
 
   return (
-    <div className="min-h-screen flex flex-col relative isolate">
+    <div className="site-page flex flex-col relative isolate">
+      <div className="site-page-glow" aria-hidden />
       <div className="absolute inset-0 -z-10 pointer-events-none">
         <div className="absolute inset-0 grid-bg opacity-40" />
         <div className="absolute top-[8%] right-[-10%] w-[min(800px,95vw)] h-[min(560px,75vh)] rounded-full blur-[100px] opacity-30 gradient-primary animate-float" />

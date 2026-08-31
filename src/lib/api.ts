@@ -264,6 +264,40 @@ export async function fetchReviews(page = 1, limit = 15) {
   return { reviews: data.data, pagination: data.pagination };
 }
 
+export type ReviewFeedEntry = ReviewItem & {
+  appearedAt?: number;
+  secsAgo?: number;
+};
+
+export type ReviewFeedData = {
+  serverTime: number;
+  poolSize: number;
+  visibleCount: number;
+  latestGlobalIndex: number;
+  entries: ReviewFeedEntry[];
+  myReview: (ReviewItem & { status?: string }) | null;
+};
+
+export async function fetchReviewFeed() {
+  const { data } = await api.get<{ success: boolean; data: ReviewFeedData }>("/reviews/feed");
+  return data.data;
+}
+
+export async function submitReview(payload: { rating: number; text: string }) {
+  const { data } = await api.post<{ success: boolean; data: ReviewItem & { status?: string } }>(
+    "/reviews",
+    payload,
+  );
+  return data.data;
+}
+
+export async function deleteMyReview() {
+  const { data } = await api.delete<{ success: boolean; data: { deleted: boolean; id: string } }>(
+    "/reviews/mine",
+  );
+  return data.data;
+}
+
 export type ApiUser = {
   _id: string;
   fullName: string;

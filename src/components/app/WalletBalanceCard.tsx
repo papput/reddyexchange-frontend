@@ -46,7 +46,7 @@ export function WalletBalanceCard({
 
       <div className="relative overflow-hidden rounded-[1.65rem] border border-white/[0.1] wallet-card-surface shadow-[0_32px_64px_-24px_rgba(0,0,0,0.55)]">
         <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_100%_0%,color-mix(in_oklab,var(--brand-violet)_35%,transparent),transparent_55%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_100%_0%,color-mix(in_oklab,var(--primary)_35%,transparent),transparent_55%)]"
           aria-hidden
         />
         <div

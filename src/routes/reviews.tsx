@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Loader2, MapPin, Quote, Star } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { SitePageLayout } from "@/components/site/SitePageLayout";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,7 +53,7 @@ function StarRow({ rating }: { rating: number }) {
           key={i}
           className={cn(
             "h-3.5 w-3.5",
-            i < rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30",
+            i < rating ? "fill-warning text-warning" : "text-muted-foreground/30",
           )}
         />
       ))}
@@ -74,17 +75,22 @@ function ReviewCard({
   publishedAt: string;
 }) {
   return (
-    <article className="glass rounded-2xl p-5 sm:p-6 border border-border/50 hover-lift hover-lift-safe card-shell relative">
-      <Quote className="absolute top-4 right-4 h-8 w-8 text-primary/15" aria-hidden />
+    <article className="glass-card p-5 sm:p-6 relative group hover:border-primary/30 transition-all duration-200 h-full">
+      <Quote className="absolute top-4 right-4 h-6 w-6 text-primary/20" aria-hidden />
       <div className="flex items-start justify-between gap-3 mb-3">
-        <div>
-          <p className="font-semibold text-foreground">{authorName}</p>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-bold text-xs shadow-lg shadow-primary/20 shrink-0">
+            {authorName.slice(0, 1).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-foreground truncate">{authorName}</p>
           {city ? (
             <p className="text-xs text-muted-foreground mt-0.5 inline-flex items-center gap-1">
               <MapPin className="h-3 w-3 shrink-0" />
               {city}
             </p>
           ) : null}
+          </div>
         </div>
         <StarRow rating={rating} />
       </div>
@@ -110,7 +116,7 @@ function ReviewsPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <SitePageLayout>
       <SiteHeader />
       <main className="flex-1 container mx-auto px-4 py-10 sm:py-14 max-w-3xl">
         <div className="text-center mb-8 sm:mb-10">
@@ -122,7 +128,7 @@ function ReviewsPage() {
             Trusted by users <span className="gradient-text">across India</span>
           </h1>
           <p className="text-secondary mt-3 text-sm sm:text-base max-w-lg mx-auto">
-            Real feedback from verified customers. New reviews are added daily — rolling 12-day window.
+            Real feedback from verified customers. User-submitted reviews are moderated before they appear publicly.
           </p>
           {pagination ? (
             <p className="text-xs text-muted-foreground mt-2 tabular-nums">
@@ -219,6 +225,6 @@ function ReviewsPage() {
         </div>
       </main>
       <SiteFooter />
-    </div>
+    </SitePageLayout>
   );
 }

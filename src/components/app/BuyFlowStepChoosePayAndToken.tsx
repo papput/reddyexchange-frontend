@@ -249,22 +249,8 @@ export function BuyFlowStepChoosePayAndToken({
     );
 
   return (
-    <div
-      className={cn(
-        "card-glow-frame w-full max-w-full min-w-0 mb-2 sm:mb-3",
-        "rounded-[1.25rem] sm:rounded-[1.35rem] p-[1px]",
-        "bg-gradient-to-br from-primary/65 via-accent/40 to-primary/55",
-        "shadow-[0_0_48px_-6px_rgba(108,76,255,0.55),0_0_40px_-10px_rgba(0,212,255,0.35)]",
-      )}
-    >
-      <div
-        className={cn(
-          "card-glow-surface rounded-[1.2rem] sm:rounded-[1.3rem]",
-          liteBorder,
-          "border-white/[0.12] bg-surface-2/90 backdrop-blur-md",
-          "shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)]",
-        )}
-      >
+    <div className="fc-card-frame w-full max-w-full min-w-0 mb-2 sm:mb-3">
+      <div className="fc-card-surface rounded-[inherit] overflow-hidden">
         <div className="p-3.5 sm:p-6 pb-5 sm:pb-7 space-y-3 sm:space-y-5">
           <ExchangeSection
             title="You Send"
