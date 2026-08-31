@@ -38,6 +38,7 @@ import {
   apiTrackBuyStep,
   getApiErrorMessage,
 } from "@/lib/api";
+import { launchClientGatewayPay } from "@/lib/clientGatewayPay";
 import {
   estimateBuyUsdt,
   estimateInrFromNetUsdt,
@@ -419,8 +420,9 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
         return;
       }
 
+      const clientPay = data.data?.clientPay;
       const url = data.data?.redirectUrl;
-      if (!url) throw new Error("Invalid payment response");
+      if (!clientPay && !url) throw new Error("Invalid payment response");
       setManualFallbackPay(false);
       writeBuyAutoSession({
         orderId: oid,
@@ -430,7 +432,11 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
         buyAsset,
         inr: inrRoundedForGateway,
       });
-      window.location.assign(url);
+      if (clientPay) {
+        await launchClientGatewayPay(clientPay);
+        return;
+      }
+      window.location.assign(url!);
     } catch (e) {
       const status = (e as { response?: { status?: number } })?.response?.status;
       if (status === 401) {

@@ -399,6 +399,7 @@ export async function apiInitiateAutoUpi(body: {
       payMode: "gateway" | "manual";
       orderId: string;
       redirectUrl?: string;
+      clientPay?: { action: string; fields: Record<string, string> };
       manualUpiId?: string;
     };
   }>("/buy/upi/auto/initiate", body);
