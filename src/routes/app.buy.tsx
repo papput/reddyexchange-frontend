@@ -636,6 +636,14 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
           const status = (e as { response?: { status?: number } })?.response?.status;
           if (status === 410) void expireProofSession();
         });
+      void resumeFromServer(autoPayOrderId);
+      const pollId = window.setInterval(() => {
+        void resumeFromServer(autoPayOrderId);
+      }, 5000);
+      return () => {
+        cancelled = true;
+        window.clearInterval(pollId);
+      };
     } else {
       anchorLocalProofWindow();
     }

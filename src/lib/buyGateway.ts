@@ -50,7 +50,8 @@ function isSuccessQuery(qs: URLSearchParams): boolean {
     qs.get("success") === "true" ||
     qs.get("success") === "1" ||
     qs.get("payment_status") === "success" ||
-    qs.get("status") === "success"
+    qs.get("status") === "success" ||
+    qs.get("status") === "ok"
   );
 }
 
