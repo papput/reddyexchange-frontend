@@ -536,8 +536,8 @@
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
   }
   .ring-focus:focus-within {
-    border-color: color-mix(in oklab, var(--brand-violet) 70%, transparent);
-    box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand-violet) 18%, transparent);
+    border-color: color-mix(in oklab, var(--primary) 70%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 18%, transparent);
   }
 
   .grid-bg {

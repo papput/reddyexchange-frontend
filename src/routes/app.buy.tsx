@@ -738,7 +738,7 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
   return (
     <div>
       {showGatewaySuccessBanner && (
-        <div className="mb-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+        <div className="mb-5 site-card rounded-[16px] border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
           <p className="font-semibold text-emerald-400">Payment received successfully</p>
           <p className="mt-1 text-sm text-secondary">
             {liveAuth?.token
@@ -782,7 +782,7 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
       <div
         className={cn(
           "animate-fade-up rounded-2xl min-w-0 max-w-full card-shell",
-          step === 1 ? "p-0 bg-transparent border-0 shadow-none" : "glass-strong p-5 sm:p-6 pb-6",
+          step === 1 ? "p-0 bg-transparent border-0 shadow-none" : "site-card p-5 sm:p-6 pb-6",
         )}
       >
         {step === 1 && (
@@ -872,7 +872,7 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
         {showMainNav && step !== 1 && (
           <div className="mt-6 flex flex-col gap-2 sm:flex-row cta-shadow-zone">
             {step > 1 && (
-              <Button type="button" variant="outline" onClick={back} className="glass border-border/60 sm:flex-1 h-11">
+              <Button type="button" variant="outline" onClick={back} className="border-border/60 sm:flex-1 h-11">
                 <ArrowLeft className="h-4 w-4 mr-1" /> Back
               </Button>
             )}
@@ -909,7 +909,7 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
 
         {step === 5 && (
           <div className="mt-6 flex gap-2 cta-shadow-zone">
-            <Button type="button" variant="outline" onClick={() => nav({ to: "/app" })} className="flex-1 glass border-border/60 h-11">
+            <Button type="button" variant="outline" onClick={() => nav({ to: "/app" })} className="flex-1 border-border/60 h-11">
               Go home
             </Button>
             <Button type="button" onClick={resetFlow} className="flex-1 gradient-primary border-0 hover-glow h-11">
@@ -1502,7 +1502,7 @@ function StepUtrProof({
         </p>
       ) : null}
       {autoPayOrderId && (
-        <div className="rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-secondary">
+        <div className="site-card rounded-[16px] border-primary/30 bg-primary/5 px-4 py-3 text-sm text-secondary">
           <p className="font-medium text-foreground mb-1">Payment completed</p>
           <p>
             Reference <span className="font-mono text-xs">{autoPayOrderId}</span> — enter UTR from your app and attach a screenshot.

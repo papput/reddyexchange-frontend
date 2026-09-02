@@ -1,8 +1,8 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { captureGatewayReturnIfPresent } from "@/lib/buyGateway";
 import { isBuyGatewayResumeAccess } from "@/lib/authGuard";
 import { getAuth } from "@/lib/store";
-import { Logo } from "@/components/brand/Logo";
+import { SiteHeader } from "@/components/site/SiteHeader";
 import { SitePageLayout } from "@/components/site/SitePageLayout";
 import { BuyFlow } from "@/routes/app.buy";
 
@@ -34,14 +34,7 @@ export const Route = createFileRoute("/buy")({
 function PublicBuyReturnPage() {
   return (
     <SitePageLayout>
-      <header className="border-b border-border/60 bg-background/80 backdrop-blur-xl">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <Logo to="/" />
-          <Link to="/login" className="text-sm font-medium text-accent hover:underline">
-            Sign in
-          </Link>
-        </div>
-      </header>
+      <SiteHeader />
       <main className="flex-1 container mx-auto px-4 py-6 max-w-3xl w-full">
         <BuyFlow variant="public-return" />
       </main>
