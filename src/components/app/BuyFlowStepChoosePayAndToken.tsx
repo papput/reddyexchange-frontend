@@ -108,23 +108,16 @@ function SelectOptionRow({
   icon,
   title,
   subtitle,
-  aside,
 }: {
   icon: ReactNode;
   title: ReactNode;
   subtitle: ReactNode;
-  aside: ReactNode;
 }) {
   return (
-    <div className="flex w-full items-center gap-3 min-w-0">
+    <div className="flex w-full items-center gap-3 min-w-0 pr-1">
       <div className="shrink-0">{icon}</div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2 min-w-0">
-          <div className="min-w-0 text-base font-semibold text-foreground leading-tight">{title}</div>
-          <div className="shrink-0 text-xs sm:text-sm text-muted-foreground text-right leading-snug max-w-[52%] [&_span]:justify-end">
-            {aside}
-          </div>
-        </div>
+        <div className="min-w-0 text-base font-semibold text-foreground leading-tight">{title}</div>
         <div className="text-sm text-muted-foreground mt-0.5 truncate">{subtitle}</div>
       </div>
     </div>
@@ -221,20 +214,22 @@ export function BuyFlowStepChoosePayAndToken({
   );
 
   const selectContentPanel = cn(
-    "rounded-xl p-1.5 shadow-xl shadow-black/50 z-[200]",
+    "rounded-xl p-2 shadow-xl shadow-black/50 z-[200]",
     liteBorder,
     "bg-popover/98 backdrop-blur-md",
     "min-w-[var(--radix-select-trigger-width)] w-[min(calc(100vw-1.25rem),24rem)] max-w-[24rem] max-h-[min(70vh,28rem)]",
   );
 
   const selectItemRow = cn(
-    "rounded-lg py-2.5 px-2.5 my-0.5 cursor-pointer",
-    liteBorder,
-    "border-transparent",
-    "items-center text-left [&>span]:w-full",
-    "data-[highlighted]:bg-muted/90 data-[highlighted]:text-foreground data-[highlighted]:border-border/40",
-    "data-[state=checked]:bg-primary/10 data-[state=checked]:border-primary/25",
-    "pl-2.5 pr-9 min-h-[3.5rem]",
+    "rounded-xl py-2.5 px-3 my-1 cursor-pointer",
+    "border border-white/20 bg-transparent",
+    "items-center text-left",
+    // Only stretch ItemText — not the absolute tick (full-width tick was centering it mid-row)
+    "[&>span:not(.absolute)]:w-full [&>span:not(.absolute)]:min-w-0",
+    "data-[highlighted]:bg-muted/40 data-[highlighted]:text-foreground data-[highlighted]:border-white/30",
+    "data-[state=checked]:bg-primary/15 data-[state=checked]:border-primary/55",
+    "pl-3 pr-12 min-h-[3.75rem]",
+    "[&>span.absolute]:right-3 [&>span.absolute]:w-6 [&>span.absolute]:shrink-0",
   );
 
 
@@ -273,7 +268,6 @@ export function BuyFlowStepChoosePayAndToken({
                     icon={<UpiMark className="h-10 w-10 shrink-0 object-contain" />}
                     title="UPI"
                     subtitle="QR or link"
-                    aside="no method fee"
                   />
                 </SelectItem>
                 <SelectItem value="bank" textValue="Bank IMPS" className={selectItemRow}>
@@ -281,7 +275,6 @@ export function BuyFlowStepChoosePayAndToken({
                     icon={<BankImpsMark className="h-10 w-10 shrink-0 object-contain" />}
                     title="Bank IMPS"
                     subtitle="IMPS / NEFT"
-                    aside="no method fee"
                   />
                 </SelectItem>
               </SelectContent>
