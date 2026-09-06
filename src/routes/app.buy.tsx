@@ -428,10 +428,12 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
         orderId: oid,
         userId: auth?.user?.id,
         awaitingReturn: true,
+        resumeStep: 4,
         network,
         buyAsset,
         inr: inrRoundedForGateway,
       });
+      markGatewayReturnPending();
       if (clientPay) {
         await launchClientGatewayPay(clientPay);
         return;

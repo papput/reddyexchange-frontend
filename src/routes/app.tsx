@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { BottomNav, SideNav } from "@/components/app/AppNav";
 import { Logo } from "@/components/brand/Logo";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { usePublicSettings } from "@/hooks/use-public-settings";
 import { captureGatewayReturnIfPresent } from "@/lib/buyGateway";
+import { isBuyGatewayResumeAccess, isGatewayReturnFlowActive } from "@/lib/authGuard";
 import {
   SupportChannelIcons,
   useSupportContactAction,
@@ -25,6 +26,8 @@ function AppLayout() {
   const hydrated = useHydrated();
   const nav = useNavigate();
   const redirected = useRef(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const search = useRouterState({ select: (s) => s.location.search });
   const { data: settings } = usePublicSettings();
   const { channels, action, trigger, chooser, label } = useSupportContactAction(settings);
 
@@ -35,9 +38,20 @@ function AppLayout() {
 
   useEffect(() => {
     if (!hydrated || auth || redirected.current) return;
+
+    // Gateway return without a readable session → public /buy proof page (not login bounce).
+    if (
+      (pathname === "/app/buy" || pathname.endsWith("/buy")) &&
+      (isBuyGatewayResumeAccess(pathname, search) || isGatewayReturnFlowActive())
+    ) {
+      redirected.current = true;
+      nav({ to: "/buy", search, replace: true });
+      return;
+    }
+
     redirected.current = true;
     nav({ to: "/login", replace: true });
-  }, [hydrated, auth, nav]);
+  }, [hydrated, auth, nav, pathname, search]);
 
   if (!hydrated || !auth) {
     return null;

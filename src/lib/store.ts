@@ -157,6 +157,11 @@ function shouldSuppressExpiryFlash(): boolean {
   }
 }
 
+/** During gateway return, keep the stored session so the user is not wiped mid-redirect. */
+function shouldPreserveAuthThroughGatewayReturn(): boolean {
+  return shouldSuppressExpiryFlash();
+}
+
 export function normalizeApiUser(u: ApiUser): User {
   return {
     id: String(u._id),
@@ -175,6 +180,9 @@ export function getAuth(): AuthState {
   if (raw === authSnapshot.raw) {
     const cached = authSnapshot.value;
     if (cached?.token && isTokenExpired(cached.token)) {
+      if (shouldPreserveAuthThroughGatewayReturn()) {
+        return cached;
+      }
       if (!shouldSuppressExpiryFlash()) {
         try {
           sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
@@ -194,6 +202,10 @@ export function getAuth(): AuthState {
   try {
     const value = JSON.parse(raw) as AuthState;
     if (value?.token && isTokenExpired(value.token)) {
+      if (shouldPreserveAuthThroughGatewayReturn()) {
+        authSnapshot = { raw, value };
+        return value;
+      }
       if (!shouldSuppressExpiryFlash()) {
         try {
           sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");

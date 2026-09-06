@@ -122,6 +122,7 @@ function Hero({
   rate: number;
   channels: ReturnType<typeof getSupportChannels>;
 }) {
+  const auth = useAuth();
   const [chooserOpen, setChooserOpen] = useState(false);
   const action = resolveSupportAction(channels);
   const label =
@@ -160,23 +161,47 @@ function Hero({
               INR — UPI, IMPS, and multi-chain delivery.
             </p>
             <div className="hidden md:flex flex-wrap gap-3 cta-shadow-zone">
-              <Button
-                asChild
-                size="lg"
-                className="gradient-primary border-0 hover-glow text-base h-12 px-7 font-semibold"
-              >
-                <Link to="/login">
-                  Login <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="h-12 px-7 glass-card border-border/60 hover:border-primary/30"
-              >
-                <Link to="/register">Sign up</Link>
-              </Button>
+              {auth?.token ? (
+                <>
+                  <Button
+                    asChild
+                    size="lg"
+                    className="gradient-primary border-0 hover-glow text-base h-12 px-7 font-semibold"
+                  >
+                    <Link to="/app">
+                      Open App <ArrowRight className="ml-1 h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="h-12 px-7 glass-card border-border/60 hover:border-primary/30"
+                  >
+                    <Link to="/app/buy">Buy USDT</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    asChild
+                    size="lg"
+                    className="gradient-primary border-0 hover-glow text-base h-12 px-7 font-semibold"
+                  >
+                    <Link to="/login">
+                      Login <ArrowRight className="ml-1 h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="h-12 px-7 glass-card border-border/60 hover:border-primary/30"
+                  >
+                    <Link to="/register">Sign up</Link>
+                  </Button>
+                </>
+              )}
             </div>
             <div className="hidden md:flex flex-wrap items-center gap-x-5 gap-y-2 pt-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5">

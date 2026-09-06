@@ -66,33 +66,34 @@ async function invalidateSessionAndNotify() {
   if (typeof window === "undefined" || sessionInvalidationInFlight) return;
   sessionInvalidationInFlight = true;
   try {
+    const path = window.location.pathname;
+    const gatewayResume =
+      (path === "/buy" || path === "/app/buy" || path.endsWith("/buy")) &&
+      (await isGatewayReturnFlowActive());
+
+    // Never wipe the session mid gateway-return — user must finish proof / soft re-login on /buy.
+    if (gatewayResume) {
+      return;
+    }
+
     const { logout } = await import("@/lib/store");
     logout();
-    const path = window.location.pathname;
 
     const onAuthPage =
       path.startsWith("/login") ||
       path.startsWith("/register") ||
       path.startsWith("/forgot-password");
 
-    const gatewayResume =
-      (path === "/buy" || path === "/app/buy" || path.endsWith("/buy")) &&
-      (await isGatewayReturnFlowActive());
-
     if (onAuthPage) {
       toast.info(SESSION_TOAST_TITLE, {
-        description: gatewayResume
-          ? "Sign in to submit your payment proof and complete your order."
-          : SESSION_TOAST_DESCRIPTION,
+        description: SESSION_TOAST_DESCRIPTION,
         duration: 6500,
       });
     } else {
-      if (!gatewayResume) {
-        try {
-          sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
-        } catch {
-          /* ignore quota / private mode */
-        }
+      try {
+        sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
+      } catch {
+        /* ignore quota / private mode */
       }
       window.location.assign("/login");
     }

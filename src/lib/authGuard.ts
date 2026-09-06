@@ -6,7 +6,7 @@ import {
   isGatewayReturnPending,
   parseGatewayReturn,
 } from "@/lib/buyGateway";
-import { getAuth, logout, type AuthState } from "@/lib/store";
+import { getAuth, type AuthState } from "@/lib/store";
 
 const PUBLIC_PATHS = new Set([
   "/",
@@ -19,6 +19,7 @@ const PUBLIC_PATHS = new Set([
   "/contact",
   "/reviews",
   "/refund",
+  "/buy",
 ]);
 
 export function isPublicPath(pathname: string): boolean {
@@ -51,11 +52,12 @@ export function isGatewayReturnFlowActive(): boolean {
  */
 export function guardRouteAuth(pathname: string, search: unknown): AuthState {
   if (typeof window === "undefined") return null;
-  if (isPublicPath(pathname)) return getAuth();
 
   if (isBuyPath(pathname)) {
     captureGatewayReturnIfPresent(pathname, search);
   }
+
+  if (isPublicPath(pathname)) return getAuth();
 
   const auth = getAuth();
   if (auth?.token) return auth;
@@ -70,8 +72,7 @@ export function guardRouteAuth(pathname: string, search: unknown): AuthState {
     throw redirect({ to: "/buy", search, replace: true });
   }
 
-  logout();
-
+  // Do not wipe storage here — missing token already means signed out.
   try {
     sessionStorage.setItem(SESSION_EXPIRED_FLASH_KEY, "1");
   } catch {
