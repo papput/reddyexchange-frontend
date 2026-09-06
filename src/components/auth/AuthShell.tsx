@@ -10,6 +10,7 @@ import {
   SupportChannelIcons,
   useSupportContactAction,
 } from "@/components/site/SupportContact";
+import { AuthChannelInvite } from "@/components/auth/AuthChannelInvite";
 
 const TRUST_ITEMS = [
   {
@@ -153,6 +154,8 @@ export function AuthShell({
           {children}
         </div>
       </div>
+
+      {(variant === "login" || variant === "register") && <AuthChannelInvite />}
 
       <div
         className={cn(

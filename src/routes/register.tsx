@@ -8,7 +8,7 @@ import { AuthSubmitButton } from "@/components/auth/AuthSubmitButton";
 import { Input } from "@/components/ui/input";
 import { apiRegister, getApiErrorMessage } from "@/lib/api";
 import { normalizeApiUser, setAuth } from "@/lib/store";
-import { Clock, Lock, Mail, Phone, UserRound } from "lucide-react";
+import { Clock, Lock, Mail, MessageCircle, Phone, UserRound } from "lucide-react";
 import { site } from "@/config/site";
 
 export const Route = createFileRoute("/register")({
@@ -28,12 +28,27 @@ const schema = z.object({
     .string()
     .trim()
     .regex(/^[6-9]\d{9}$/, "Enter a 10-digit Indian mobile"),
+  telegramId: z
+    .string()
+    .trim()
+    .min(5, "Enter your Telegram username or ID")
+    .max(64)
+    .refine((v) => {
+      const t = v.startsWith("@") ? v.slice(1) : v;
+      return /^\d{5,15}$/.test(t) || /^[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(t);
+    }, "Use @username or numeric Telegram ID"),
   password: z.string().min(6, "Min 6 characters").max(72),
 });
 
 function RegisterPage() {
   const nav = useNavigate();
-  const [data, setData] = useState({ fullName: "", email: "", mobile: "", password: "" });
+  const [data, setData] = useState({
+    fullName: "",
+    email: "",
+    mobile: "",
+    telegramId: "",
+    password: "",
+  });
   const [loading, setLoading] = useState(false);
   const set = <K extends keyof typeof data>(k: K, v: string) => setData((d) => ({ ...d, [k]: v }));
 
@@ -46,10 +61,12 @@ function RegisterPage() {
     }
     setLoading(true);
     try {
+      const tg = data.telegramId.trim().replace(/^@/, "");
       const { data: body } = await apiRegister({
         fullName: data.fullName.trim(),
         email: data.email.trim().toLowerCase(),
         mobile: data.mobile.replace(/\D/g, "").slice(-10),
+        telegramId: tg,
         password: data.password,
       });
       if (!body?.token || !body?.data?.user) throw new Error("Invalid server response");
@@ -67,7 +84,7 @@ function RegisterPage() {
     <AuthShell
       variant="register"
       title="Create your account"
-      subtitle={`Start trading on ${site.siteName} in under a minute. Email, mobile, and password — no OTP to sign up.`}
+      subtitle={`Start trading on ${site.siteName} in under a minute. Email, mobile, Telegram ID, and password — no OTP to sign up.`}
       footer={
         <>
           Already have an account? <AuthFooterLink to="/login">Sign in</AuthFooterLink>
@@ -114,6 +131,15 @@ function RegisterPage() {
             inputMode="numeric"
             autoComplete="tel-national"
             maxLength={10}
+          />
+        </AuthField>
+        <AuthField label="Telegram ID" icon={MessageCircle} hint="@username or numeric ID">
+          <Input
+            value={data.telegramId}
+            onChange={(e) => set("telegramId", e.target.value.trimStart())}
+            placeholder="@yourusername"
+            autoComplete="off"
+            maxLength={64}
           />
         </AuthField>
         <AuthField label="Password" icon={Lock} hint="Min. 6 characters">

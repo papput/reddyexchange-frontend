@@ -304,6 +304,7 @@ export type ApiUser = {
   fullName: string;
   email: string;
   mobile: string;
+  telegramId?: string;
   createdAt?: string;
   primeExchUsdtBalance?: number;
   /** Per-user floor; omit, null, or 0 → platform default (25 USDT) on server. */
@@ -322,6 +323,7 @@ export async function apiRegister(body: {
   email: string;
   mobile: string;
   password: string;
+  telegramId: string;
 }) {
   return apiPost<{ success: boolean; token: string; data: { user: ApiUser } }>(
     "/auth/register",
@@ -357,7 +359,11 @@ export async function apiFetchProfile() {
   return apiGet<{ success: boolean; data: ApiUser }>("/user/profile");
 }
 
-export async function apiUpdateProfile(body: { fullName?: string; mobile?: string }) {
+export async function apiUpdateProfile(body: {
+  fullName?: string;
+  mobile?: string;
+  telegramId?: string;
+}) {
   return apiPut<{ success: boolean; data: ApiUser }>("/user/update", body);
 }
 

@@ -617,6 +617,67 @@
       drop-shadow(0 28px 52px -18px color-mix(in oklab, var(--brand-blue) 18%, transparent));
   }
 
+  @keyframes auth-channel-invite-glow-tg {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 0 color-mix(in oklab, var(--primary) 0%, transparent),
+        0 8px 24px -16px color-mix(in oklab, var(--primary) 35%, transparent);
+    }
+    50% {
+      box-shadow:
+        0 0 22px -4px color-mix(in oklab, var(--primary) 42%, transparent),
+        0 10px 28px -12px color-mix(in oklab, var(--primary) 50%, transparent);
+    }
+  }
+
+  @keyframes auth-channel-invite-glow-wa {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 0 color-mix(in oklab, #34d399 0%, transparent),
+        0 8px 24px -16px color-mix(in oklab, #34d399 28%, transparent);
+    }
+    50% {
+      box-shadow:
+        0 0 22px -4px color-mix(in oklab, #34d399 38%, transparent),
+        0 10px 28px -12px color-mix(in oklab, #34d399 45%, transparent);
+    }
+  }
+
+  @keyframes auth-channel-invite-icon {
+    0%,
+    100% {
+      transform: translateY(0) scale(1);
+    }
+    40% {
+      transform: translateY(-2px) scale(1.06);
+    }
+    60% {
+      transform: translateY(1px) scale(1.02);
+    }
+  }
+
+  .auth-channel-invite--tg {
+    animation: auth-channel-invite-glow-tg 2.8s ease-in-out infinite;
+  }
+
+  .auth-channel-invite--wa {
+    animation: auth-channel-invite-glow-wa 2.8s ease-in-out infinite;
+  }
+
+  .auth-channel-invite__icon {
+    animation: auth-channel-invite-icon 2.6s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .auth-channel-invite--tg,
+    .auth-channel-invite--wa,
+    .auth-channel-invite__icon {
+      animation: none;
+    }
+  }
+
   .wallet-card-frame {
     position: relative;
     isolation: isolate;

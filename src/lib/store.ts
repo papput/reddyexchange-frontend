@@ -66,6 +66,7 @@ export type User = {
   fullName: string;
   email: string;
   mobile: string;
+  telegramId?: string;
   createdAt: string | number;
   primeExchUsdtBalance?: number;
   withdrawalMinLimitUsdt?: number;
@@ -168,6 +169,7 @@ export function normalizeApiUser(u: ApiUser): User {
     fullName: u.fullName,
     email: u.email,
     mobile: u.mobile,
+    telegramId: u.telegramId ? String(u.telegramId) : "",
     createdAt: u.createdAt ? new Date(u.createdAt).getTime() : Date.now(),
     primeExchUsdtBalance: u.primeExchUsdtBalance,
     withdrawalMinLimitUsdt: u.withdrawalMinLimitUsdt,
@@ -254,6 +256,7 @@ export function updateAuthUser(partial: Partial<User>) {
     prev.fullName === nextUser.fullName &&
     prev.email === nextUser.email &&
     prev.mobile === nextUser.mobile &&
+    prev.telegramId === nextUser.telegramId &&
     prev.createdAt === nextUser.createdAt &&
     prev.primeExchUsdtBalance === nextUser.primeExchUsdtBalance &&
     prev.withdrawalMinLimitUsdt === nextUser.withdrawalMinLimitUsdt;
