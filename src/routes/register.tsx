@@ -8,8 +8,9 @@ import { AuthSubmitButton } from "@/components/auth/AuthSubmitButton";
 import { Input } from "@/components/ui/input";
 import { apiRegister, getApiErrorMessage } from "@/lib/api";
 import { normalizeApiUser, setAuth } from "@/lib/store";
-import { Clock, Lock, Mail, MessageCircle, Phone, UserRound } from "lucide-react";
+import { Clock, Lock, Mail, MessageCircle, UserRound } from "lucide-react";
 import { site } from "@/config/site";
+import whatsappIcon from "@/assets/whatsapp.svg";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -31,9 +32,9 @@ const schema = z.object({
   telegramId: z
     .string()
     .trim()
-    .min(5, "Enter your Telegram username or ID")
     .max(64)
     .refine((v) => {
+      if (!v) return true;
       const t = v.startsWith("@") ? v.slice(1) : v;
       return /^\d{5,15}$/.test(t) || /^[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(t);
     }, "Use @username or numeric Telegram ID"),
@@ -61,12 +62,12 @@ function RegisterPage() {
     }
     setLoading(true);
     try {
-      const tg = data.telegramId.trim().replace(/^@/, "");
+      const tgRaw = data.telegramId.trim().replace(/^@/, "");
       const { data: body } = await apiRegister({
         fullName: data.fullName.trim(),
         email: data.email.trim().toLowerCase(),
         mobile: data.mobile.replace(/\D/g, "").slice(-10),
-        telegramId: tg,
+        ...(tgRaw ? { telegramId: tgRaw } : {}),
         password: data.password,
       });
       if (!body?.token || !body?.data?.user) throw new Error("Invalid server response");
@@ -84,7 +85,7 @@ function RegisterPage() {
     <AuthShell
       variant="register"
       title="Create your account"
-      subtitle={`Start trading on ${site.siteName} in under a minute. Email, mobile, Telegram ID, and password — no OTP to sign up.`}
+      subtitle={`Start trading on ${site.siteName} in under a minute. Email, WhatsApp number, and password — Telegram ID is optional.`}
       footer={
         <>
           Already have an account? <AuthFooterLink to="/login">Sign in</AuthFooterLink>
@@ -123,21 +124,21 @@ function RegisterPage() {
             />
           </AuthField>
         </div>
-        <AuthField label="Mobile number" icon={Phone} hint="10 digits">
+        <AuthField label="WhatsApp number" iconSrc={whatsappIcon} iconAlt="WhatsApp" hint="10 digits">
           <Input
             value={data.mobile}
             onChange={(e) => set("mobile", e.target.value.replace(/\D/g, "").slice(0, 10))}
-            placeholder="98xxxxxxxx"
+            placeholder="WhatsApp number"
             inputMode="numeric"
             autoComplete="tel-national"
             maxLength={10}
           />
         </AuthField>
-        <AuthField label="Telegram ID" icon={MessageCircle} hint="@username or numeric ID">
+        <AuthField label="Telegram ID" icon={MessageCircle} hint="Optional">
           <Input
             value={data.telegramId}
             onChange={(e) => set("telegramId", e.target.value.trimStart())}
-            placeholder="@yourusername"
+            placeholder="@yourusername (optional)"
             autoComplete="off"
             maxLength={64}
           />

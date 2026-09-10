@@ -323,7 +323,7 @@ export async function apiRegister(body: {
   email: string;
   mobile: string;
   password: string;
-  telegramId: string;
+  telegramId?: string;
 }) {
   return apiPost<{ success: boolean; token: string; data: { user: ApiUser } }>(
     "/auth/register",

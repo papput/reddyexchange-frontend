@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 export function AuthField({
   label,
   icon: Icon,
+  iconSrc,
+  iconAlt = "",
   children,
   className,
   hint,
@@ -12,12 +14,16 @@ export function AuthField({
 }: {
   label: string;
   icon?: LucideIcon;
+  /** Optional image icon (e.g. WhatsApp SVG) shown instead of a Lucide icon. */
+  iconSrc?: string;
+  iconAlt?: string;
   children: React.ReactNode;
   className?: string;
   hint?: string;
   size?: "default" | "lg";
 }) {
   const lg = size === "lg";
+  const showIcon = Boolean(Icon || iconSrc);
 
   return (
     <div className={cn("space-y-2 group/field", lg && "space-y-2.5", className)}>
@@ -39,7 +45,7 @@ export function AuthField({
           lg && "rounded-[0.9rem]",
         )}
       >
-        {Icon ? (
+        {showIcon ? (
           <span
             className={cn(
               "ml-2 flex shrink-0 items-center justify-center rounded-lg",
@@ -50,7 +56,17 @@ export function AuthField({
             )}
             aria-hidden
           >
-            <Icon className={lg ? "h-5 w-5" : "h-4 w-4"} />
+            {iconSrc ? (
+              <img
+                src={iconSrc}
+                alt={iconAlt}
+                className={lg ? "h-5 w-5 object-contain" : "h-4 w-4 object-contain"}
+                width={lg ? 20 : 16}
+                height={lg ? 20 : 16}
+              />
+            ) : Icon ? (
+              <Icon className={lg ? "h-5 w-5" : "h-4 w-4"} />
+            ) : null}
           </span>
         ) : null}
         <div
