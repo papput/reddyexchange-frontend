@@ -7,7 +7,11 @@ import { AuthField } from "@/components/auth/AuthField";
 import { AuthSubmitButton } from "@/components/auth/AuthSubmitButton";
 import { Input } from "@/components/ui/input";
 import { apiLogin, getApiErrorMessage } from "@/lib/api";
-import { SESSION_EXPIRED_FLASH_KEY, GATEWAY_RETURN_PENDING_KEY } from "@/lib/constants";
+import {
+  SESSION_EXPIRED_FLASH_KEY,
+  GATEWAY_RETURN_PENDING_KEY,
+  WHATSAPP_PROMO_PENDING_KEY,
+} from "@/lib/constants";
 import {
   clearBuyAutoSessionIfWrongUser,
   hasPendingBuyResume,
@@ -81,6 +85,13 @@ function LoginPage() {
         });
       }
       setAuth(data.token, user);
+      if (!paymentReturn) {
+        try {
+          sessionStorage.setItem(WHATSAPP_PROMO_PENDING_KEY, "1");
+        } catch {
+          /* ignore */
+        }
+      }
       toast.success(paymentReturn ? "Signed in — complete your order below" : "Welcome back");
       nav({ to: "/app/buy" });
     } catch (err: unknown) {

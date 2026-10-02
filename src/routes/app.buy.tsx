@@ -57,6 +57,7 @@ import { IconBsc, IconEth, IconPex, IconTron } from "@/components/app/NetworkTok
 import { ProofUploadPreview } from "@/components/app/ProofUploadPreview";
 import { FormattedUsdt, UsdtMark, UsdtWord } from "@/components/app/UsdtMark";
 import { cn } from "@/lib/utils";
+import whatsappIcon from "@/assets/whatsapp.svg";
 import {
   BUY_PROOF_WINDOW_MS,
   clearBuyAutoSession,
@@ -868,7 +869,28 @@ export function BuyFlow({ variant = "default" }: { variant?: "default" | "public
         )}
 
         {step === 5 && (
-          <StepStatus orderId={orderId} inr={inr} usdt={usdt} network={displayNetwork} receiveLabel={receiveLabel} />
+          <StepStatus
+            orderId={orderId}
+            inr={inr}
+            usdt={usdt}
+            network={displayNetwork}
+            receiveLabel={receiveLabel}
+            whatsappUrl={
+              settings?.whatsappEnabled !== false
+                ? buildWhatsAppUrl(
+                    whatsappNumber,
+                    [
+                      `Hi ${site.siteName}, I just placed a buy order. Please process it fast.`,
+                      ``,
+                      `Order ID: ${orderId || "—"}`,
+                      `Amount paid: ${fmtINR(inr)}`,
+                      `USDT (est.): ${fmtUSDT(usdt)}`,
+                      `Network: ${displayNetwork}`,
+                    ].join("\n"),
+                  )
+                : ""
+            }
+          />
         )}
 
         {showMainNav && step !== 1 && (
@@ -1530,12 +1552,14 @@ function StepStatus({
   usdt,
   network,
   receiveLabel,
+  whatsappUrl,
 }: {
   orderId: string;
   inr: number;
   usdt: number;
   network: Network;
   receiveLabel: ReactNode;
+  whatsappUrl: string;
 }) {
   return (
     <div className="text-center py-2">
@@ -1554,6 +1578,32 @@ function StepStatus({
         <Row label="Network" value={network} />
         <Row label="Status" value={<span className="text-amber-700 dark:text-amber-300 font-medium">Pending verification</span>} />
       </div>
+
+      {whatsappUrl ? (
+        <div className="buy-wa-card relative mt-4 overflow-hidden rounded-2xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/[0.12] via-emerald-500/[0.06] to-primary/[0.08] p-4 sm:p-5 text-left">
+          <div className="flex items-start gap-3.5">
+            <span className="buy-wa-card__icon flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-500/15">
+              <img src={whatsappIcon} alt="" width={28} height={28} className="h-7 w-7" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">Faster processing</p>
+              <h3 className="mt-0.5 text-base font-semibold text-foreground">Share your order on WhatsApp</h3>
+              <p className="mt-1 text-xs sm:text-sm text-secondary leading-relaxed">
+                Tell us on WhatsApp after paying — we&apos;ll verify and process your order faster. Your order details are pre-filled.
+              </p>
+            </div>
+          </div>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 text-sm font-semibold text-white shadow-[0_8px_24px_-10px_rgba(16,185,129,0.7)] transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+          >
+            <img src={whatsappIcon} alt="" width={18} height={18} className="h-[18px] w-[18px] brightness-0 invert" />
+            Inform us on WhatsApp
+          </a>
+        </div>
+      ) : null}
     </div>
   );
 }

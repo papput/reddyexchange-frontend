@@ -2,6 +2,7 @@ import { Outlet, createRootRoute, HeadContent, Scripts, Link } from "@tanstack/r
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { FloatingContact } from "@/components/site/FloatingContact";
+import { WhatsAppPromoModal } from "@/components/site/WhatsAppPromoModal";
 import { AuthSessionWatcher } from "@/components/auth/AuthSessionWatcher";
 import { guardRouteAuth } from "@/lib/authGuard";
 import { site } from "@/config/site";
@@ -103,6 +104,7 @@ fbq('track', 'PageView');`,
           <AuthSessionWatcher />
           {children}
           <FloatingContact />
+          <WhatsAppPromoModal />
           <Toaster />
         </QueryClientProvider>
         <Scripts />

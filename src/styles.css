@@ -670,11 +670,91 @@
     animation: auth-channel-invite-icon 2.6s ease-in-out infinite;
   }
 
+  .buy-wa-card {
+    animation: auth-channel-invite-glow-wa 2.8s ease-in-out infinite;
+  }
+
+  .buy-wa-card__icon {
+    animation: auth-channel-invite-icon 2.6s ease-in-out infinite;
+  }
+
+  @keyframes wa-confetti-fall {
+    0% {
+      opacity: 0;
+      transform: translate3d(0, -20px, 0) rotate(0deg);
+    }
+    10% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translate3d(var(--wa-drift, 0px), 520px, 0) rotate(var(--wa-rotate, 360deg));
+    }
+  }
+
+  @keyframes wa-promo-pop {
+    0% {
+      transform: scale(0.4);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(1.12);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes wa-promo-ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(1.7);
+      opacity: 0;
+    }
+  }
+
+  .wa-confetti-piece {
+    position: absolute;
+    top: -12px;
+    opacity: 0;
+    animation-name: wa-confetti-fall;
+    animation-timing-function: cubic-bezier(0.25, 0.6, 0.4, 1);
+    animation-fill-mode: forwards;
+  }
+
+  .wa-promo-modal {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, #34d399 18%, transparent),
+      0 24px 60px -20px color-mix(in oklab, #34d399 45%, transparent);
+  }
+
+  .wa-promo-icon {
+    animation:
+      wa-promo-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+      auth-channel-invite-icon 2.6s ease-in-out 0.6s infinite;
+  }
+
+  .wa-promo-ring {
+    animation: wa-promo-ring 1.8s ease-out infinite;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .auth-channel-invite--tg,
     .auth-channel-invite--wa,
-    .auth-channel-invite__icon {
+    .auth-channel-invite__icon,
+    .buy-wa-card,
+    .buy-wa-card__icon,
+    .wa-promo-icon,
+    .wa-promo-ring {
       animation: none;
+    }
+
+    .wa-confetti-piece {
+      display: none;
     }
   }
 
