@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -8,7 +8,7 @@ import { AuthSubmitButton } from "@/components/auth/AuthSubmitButton";
 import { Input } from "@/components/ui/input";
 import { apiRegister, getApiErrorMessage } from "@/lib/api";
 import { normalizeApiUser, setAuth } from "@/lib/store";
-import { Clock, Lock, Mail, MessageCircle, UserRound } from "lucide-react";
+import { Clock, Lock, LogIn, Mail, MessageCircle, UserRound } from "lucide-react";
 import { site } from "@/config/site";
 import whatsappIcon from "@/assets/whatsapp.svg";
 
@@ -94,14 +94,21 @@ function RegisterPage() {
         </>
       }
     >
-      <div className="flex flex-wrap gap-2 mb-5">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/15 text-[11px] font-medium text-foreground/90">
+      <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-5">
+        <span className="inline-flex items-center gap-1 whitespace-nowrap px-1.5 sm:px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/15 text-[10.5px] sm:text-[11px] font-medium text-foreground/90">
           <Clock className="h-3 w-3 text-accent" />
           ~1 min signup
         </span>
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success/10 border border-success/20 text-[11px] font-medium text-foreground/90">
+        <span className="inline-flex items-center whitespace-nowrap px-1.5 sm:px-2.5 py-1 rounded-lg bg-success/10 border border-success/20 text-[10.5px] sm:text-[11px] font-medium text-foreground/90">
           No OTP required
         </span>
+        <Link
+          to="/login"
+          className="ml-auto inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-primary/35 bg-primary/10 px-2 sm:px-3 py-1 text-[10.5px] sm:text-[11px] font-semibold text-primary transition-colors hover:bg-primary/20 hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        >
+          <LogIn className="h-3 w-3" />
+          Sign in
+        </Link>
       </div>
 
       <form onSubmit={submit} className="space-y-4">
